@@ -12,3 +12,4 @@ packages
 
 *.sln.user
 *.csproj.user
+*.DotSettings

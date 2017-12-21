@@ -20,7 +20,7 @@ classes, but DesktopGL does not. So you can't play videos in MonoGame if you use
 
 Now with this library, you are able to play video using the same API as on other platforms in your game.
 
-The techniques, such as video-audio synchronization and independent thread rendering, can also be applied to elsewhere. You can consider this as a demostration of building a video player upon FFmpeg under the context of .NET technologies.
+The techniques, such as video-audio synchronization and independent thread rendering, can also be applied to elsewhere. You can consider this as a demonstration of building a video player upon FFmpeg under the context of .NET technologies.
 
 ## Usage
 

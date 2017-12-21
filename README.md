@@ -112,7 +112,7 @@ protected override void Draw(GameTime gameTime) {
 }
 ```
 
-In this repository there is also a visual test application. It is a simple video player with simple pausing and restarting control. Check out how it works. The test video is downloaded from [sample-video.com](http://www.sample-videos.com/).
+In this repository there is also a visual test application. It is a simple video player with simple pausing and restarting control. Check out how it works. The test video is downloaded from [sample-videos.com](http://www.sample-videos.com/).
 
 ## Known Limitation(s)
 

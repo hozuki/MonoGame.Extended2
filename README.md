@@ -111,7 +111,7 @@ protected override void Draw(GameTime gameTime) {
 
     texture?.Dispose();
 
-    base.Draw(gaemTime);
+    base.Draw(gameTime);
 }
 ```
 

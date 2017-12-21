@@ -84,6 +84,12 @@ protected override void LoadContent() {
     // The creation of VideoPlayer is a little different from standard implementations,
     // because Game.Instance is internal so we can't get the graphics device of the running game
     // within a class other than Game, without using reflection.
+
+    // You can, however, use the no parameters version of the constructor like the comment below.
+    // You will receive a compiler warning about why not doing that.
+
+    // videoPlayer = new VideoPlayer();
+    
     videoPlayer = new VideoPlayer(GraphicsDevice);
     video = VideoHelper.LoadFromFile("some_video.mp4");
 
@@ -97,7 +103,7 @@ protected override void UnloadContent() {
 }
 
 protected override void Draw(GameTime gameTime) {
-    // Frame and audio synchronizing is automatic.
+    // Frame and audio synchronization is automatic.
     var texture = videoPlayer.GetTexture();
 
     if (texture != null) {
@@ -115,7 +121,9 @@ protected override void Draw(GameTime gameTime) {
 }
 ```
 
-In this repository there is also a visual test application. It is a simple video player with simple pausing and restarting control. Check out how it works. The test video is downloaded from [sample-videos.com](http://www.sample-videos.com/).
+In this repository there is also a visual test application. It is a simple video player with simple pausing and restarting control. Check out how it works.
+
+The test video is downloaded from [sample-videos.com](http://www.sample-videos.com/), a clip of [Big Buck Bunny](https://peach.blender.org/) made by Blender Foundation. ((c) copyright 2008, Blender Foundation / www.bigbuckbunny.org)
 
 ## Known Limitation(s)
 

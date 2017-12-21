@@ -4,8 +4,9 @@ A cross-platform `Video` and `VideoPlayer` implementation for MonoGame (DesktopG
 
 **Screenshots:**
 
-<img src="https://raw.githubusercontent.com/hozuki/OpenMLTD.Projector/master/media/screenshots/screenshot1.png" width="320" height="180" />
-<img src="https://raw.githubusercontent.com/hozuki/OpenMLTD.Projector/master/media/screenshots/screenshot2.png" width="320" height="180" />
+| Ubuntu | Windows |
+|--------|------------|
+| <img src="https://raw.githubusercontent.com/hozuki/OpenMLTD.Projector/master/media/screenshots/screenshot1.png" width="320" height="180" /> | <img src="https://raw.githubusercontent.com/hozuki/OpenMLTD.Projector/master/media/screenshots/screenshot2.png" width="320" height="180" /> |
 
 ## Overview
 

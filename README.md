@@ -16,9 +16,11 @@ OpenMLTD.Projector mainly exposes two classes:
 - `Microsoft.Xna.Framework.Media.VideoPlayer`
 
 These are the video-related classes for MonoGame/XNA. MonoGame runtimes targeting Windows (DirectX), macOS, iOS and Android all have corresponding
-classes, but DesktopGL does not. So you can't play videos in MonoGame if you use DesktopGL target, unless you use some other supporting libraries, which I dind't find any.
+classes, but DesktopGL does not. So you can't play videos in MonoGame if you use DesktopGL target, unless you use some other supporting libraries. There is [one](https://github.com/brundows/XnaFFmpegDecoder), but it is rather incomplete.
 
-Now with this library, you are able to play video in your game!
+Now with this library, you are able to play video using the same API as on other platforms in your game.
+
+The techniques, such as video-audio synchronization and independent thread rendering, can also be applied to elsewhere. You can consider this as a demostration of building a video player upon FFmpeg under the context of .NET technologies.
 
 ## Usage
 

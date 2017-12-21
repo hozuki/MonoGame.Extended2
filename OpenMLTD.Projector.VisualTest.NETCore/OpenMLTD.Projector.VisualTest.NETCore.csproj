@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\OpenMLTD.Projector.VisualTest\Game1.cs" Link="Game1.cs" />
+    <Compile Include="..\OpenMLTD.Projector.VisualTest\KeyboardStateHandler.cs" Link="KeyboardStateHandler.cs" />
+    <Compile Include="..\OpenMLTD.Projector.VisualTest\KeyEventArgs.cs" Link="KeyEventArgs.cs" />
+    <Compile Include="..\OpenMLTD.Projector.VisualTest\Program.cs" Link="Program.cs" />
+    <Compile Include="..\OpenMLTD.Projector.VisualTest\TextureLoader.cs" Link="TextureLoader.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.7.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenMLTD.Projector.NETStandard\OpenMLTD.Projector.NETStandard.csproj" />
+  </ItemGroup>
+
+</Project>

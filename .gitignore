@@ -1,0 +1,14 @@
+
+_ReSharper.*
+.idea
+.vs
+
+packages
+
+[Bb]in
+[Oo]bj
+
+.history
+
+*.sln.user
+*.csproj.user

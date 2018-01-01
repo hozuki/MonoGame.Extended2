@@ -1,6 +1,6 @@
-# MonoGame.Extended.DesktopGL.VideoPlayback
+# MonoGame.Extended.Text
 
-A cross-platform `Video` and `VideoPlayer` implementation for MonoGame (DesktopGL target) using FFmpeg and OpenAL.
+Text rendering with dynamic sprite fonts, using FreeType.
 
 **Screenshots:**
 

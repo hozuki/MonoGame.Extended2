@@ -43,11 +43,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game1.cs" />
-    <Compile Include="KeyboardStateHandler.cs" />
-    <Compile Include="KeyEventArgs.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TextureLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework">
@@ -124,6 +121,10 @@
     <ProjectReference Include="..\..\Sources\MonoGame.Extended2\MonoGame.Extended2.csproj">
       <Project>{C7C3D9DE-41A4-4C21-98FB-336ED38A99D5}</Project>
       <Name>MonoGame.Extended2</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Demo.Common\Demo.Common.csproj">
+      <Project>{126b925d-40ba-4348-90e2-3284b098ee0a}</Project>
+      <Name>Demo.Common</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

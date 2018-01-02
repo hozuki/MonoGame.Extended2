@@ -14,13 +14,26 @@ namespace MonoGame.Extended.Text {
     /// </summary>
     public sealed class DynamicSpriteFont : DisposableBase {
 
+        /// <inheritdoc />
+        /// <summary>
+        /// Creates a new <see cref="T:MonoGame.Extended.Text.DynamicSpriteFont" /> instance.
+        /// This created instance can only be used for measuring strings.
+        /// </summary>
+        /// <param name="font">The <see cref="MonoGame.Extended.Text.Font"/> to use.</param>
+        public DynamicSpriteFont([NotNull] Font font)
+        : this(null, font) {
+        }
+
         /// <summary>
         /// Creates a new <see cref="DynamicSpriteFont"/> instance.
         /// </summary>
-        /// <param name="graphics">The <see cref="GraphicsDevice"/> to manage underlying textures.</param>
+        /// <param name="graphics">The <see cref="GraphicsDevice"/> to manage underlying textures. If <see langword="null"/>, this instance cannot be used for drawing.</param>
         /// <param name="font">The <see cref="MonoGame.Extended.Text.Font"/> to use.</param>
-        public DynamicSpriteFont([NotNull] GraphicsDevice graphics, [NotNull] Font font) {
-            _texturesDict = new Dictionary<char, Texture2D>();
+        public DynamicSpriteFont([CanBeNull] GraphicsDevice graphics, [NotNull] Font font) {
+            if (graphics != null) {
+                _texturesDict = new Dictionary<char, Texture2D>();
+            }
+
             _metricsDict = new Dictionary<char, GlyphMetrics>();
             _graphics = graphics;
 
@@ -31,6 +44,11 @@ namespace MonoGame.Extended.Text {
         /// The associated <see cref="MonoGame.Extended.Text.Font"/> object.
         /// </summary>
         public Font Font { get; }
+
+        /// <summary>
+        /// Gets whether this <see cref="DynamicSpriteFont"/> can be used for drawing.
+        /// </summary>
+        public bool CanDraw => _graphics != null;
 
         /// <summary>
         /// Measures a string and returns the size when it is drawn with a fixed line height.
@@ -50,7 +68,7 @@ namespace MonoGame.Extended.Text {
                 return Vector2.Zero;
             }
 
-            return Draw(null, str, Vector2.Zero, maxBounds, scale, characterSpacing, lineHeight, Color.White);
+            return DrawOrMeasure(null, str, Vector2.Zero, maxBounds, scale, characterSpacing, lineHeight, Color.White);
         }
 
         /// <summary>
@@ -70,7 +88,7 @@ namespace MonoGame.Extended.Text {
                 return Vector2.Zero;
             }
 
-            return Draw(null, str, Vector2.Zero, maxBounds, scale, spacing, Color.White);
+            return DrawOrMeasure(null, str, Vector2.Zero, maxBounds, scale, spacing, Color.White);
         }
 
         /// <summary>
@@ -85,7 +103,7 @@ namespace MonoGame.Extended.Text {
         /// <param name="lineHeight">Line height.</param>
         /// <param name="color">The color of the text.</param>
         /// <returns>Size of the drawn string, in pixels.</returns>
-        internal Vector2 Draw([CanBeNull] SpriteBatch spriteBatch, [NotNull] string str, Vector2 location, Vector2 maxBounds, Vector2 scale, float characterSpacing, float lineHeight, Color color) {
+        internal Vector2 DrawOrMeasure([CanBeNull] SpriteBatch spriteBatch, [NotNull] string str, Vector2 location, Vector2 maxBounds, Vector2 scale, float characterSpacing, float lineHeight, Color color) {
             if (maxBounds.X.Equals(0)) {
                 maxBounds.X = float.MaxValue;
             }
@@ -105,13 +123,14 @@ namespace MonoGame.Extended.Text {
             AddStringInfo(str);
 
             float actualBoundsX = 0;
-            float actualBoundsY;
 
             float? lastYMin = null;
             float? firstBaseLineY = null;
 
             var lines = str.Split(LineSeparators, StringSplitOptions.None);
             var currentLineIndex = 0;
+
+            var canDraw = CanDraw;
 
             for (var i = 0; i < lines.Length; ++i) {
                 var line = lines[i];
@@ -185,7 +204,7 @@ namespace MonoGame.Extended.Text {
                         break;
                     }
 
-                    if (spriteBatch != null) {
+                    if (canDraw && spriteBatch != null) {
                         var currentX = location.X;
                         var currentY = location.Y + (firstBaseLineY.Value + lineHeight * currentLineIndex) * scale.Y;
 
@@ -227,7 +246,7 @@ namespace MonoGame.Extended.Text {
                 }
             }
 
-            actualBoundsY = Math.Max(currentLineIndex - 1, 0) * lineHeight * scale.Y;
+            var actualBoundsY = Math.Max(currentLineIndex - 1, 0) * lineHeight * scale.Y;
 
             if (firstBaseLineY != null) {
                 actualBoundsY += firstBaseLineY.Value * scale.Y;
@@ -251,7 +270,7 @@ namespace MonoGame.Extended.Text {
         /// <param name="spacing">The spacing factor. Its X component is used for character spacing, and Y component for line spacing.</param>
         /// <param name="color">The color of the text.</param>
         /// <returns>Size of the drawn string, in pixels.</returns>
-        internal Vector2 Draw([CanBeNull] SpriteBatch spriteBatch, [NotNull] string str, Vector2 location, Vector2 maxBounds, Vector2 scale, Vector2 spacing, Color color) {
+        internal Vector2 DrawOrMeasure([CanBeNull] SpriteBatch spriteBatch, [NotNull] string str, Vector2 location, Vector2 maxBounds, Vector2 scale, Vector2 spacing, Color color) {
             if (maxBounds.X.Equals(0)) {
                 maxBounds.X = float.MaxValue;
             }
@@ -273,6 +292,8 @@ namespace MonoGame.Extended.Text {
 
             var lines = str.Split(LineSeparators, StringSplitOptions.None);
             var currentLineIndex = 0;
+
+            var canDraw = CanDraw;
 
             for (var i = 0; i < lines.Length; ++i) {
                 var line = lines[i];
@@ -343,7 +364,7 @@ namespace MonoGame.Extended.Text {
                         break;
                     }
 
-                    if (spriteBatch != null) {
+                    if (canDraw && spriteBatch != null) {
                         var currentX = location.X;
                         var currentY = location.Y + actualBoundsY * scale.Y;
 
@@ -395,11 +416,13 @@ namespace MonoGame.Extended.Text {
         }
 
         protected override void Dispose(bool disposing) {
-            foreach (var value in _texturesDict.Values) {
-                value.Dispose();
-            }
+            if (_texturesDict != null) {
+                foreach (var value in _texturesDict.Values) {
+                    value.Dispose();
+                }
 
-            _texturesDict.Clear();
+                _texturesDict.Clear();
+            }
 
             _metricsDict.Clear();
         }
@@ -430,26 +453,30 @@ namespace MonoGame.Extended.Text {
                 return;
             }
 
+            var canDraw = CanDraw;
             var fontFace = Font.FontFace;
             var glyphIndex = fontFace.GetCharIndex(@char);
 
-            fontFace.LoadGlyph(glyphIndex, LoadFlags.Render, LoadTarget.Normal);
+            var loadFlags = canDraw ? LoadFlags.Render : LoadFlags.Default;
+            fontFace.LoadGlyph(glyphIndex, loadFlags, LoadTarget.Normal);
 
             var glyph = fontFace.Glyph;
 
             _metricsDict.Add(@char, glyph.Metrics);
 
-            if (glyph.Bitmap.Buffer == IntPtr.Zero) {
-                return;
+            if (canDraw) {
+                if (glyph.Bitmap.Buffer == IntPtr.Zero) {
+                    return;
+                }
+
+                // Some fonts would have size.X or size.Y being equal to 0, so here we add an one-pixel redundancy.
+                var charSize = fontFace.GetCharSize(glyphIndex, glyph.Metrics, nextChar, 1, 1);
+                var texture = new Texture2D(_graphics, (int)Math.Round(charSize.X), (int)Math.Round(charSize.Y), false, SurfaceFormat.Color);
+
+                glyph.Bitmap.RenderToTexture(texture);
+
+                _texturesDict.Add(@char, texture);
             }
-
-            // Some fonts would have size.X or size.Y being equal to 0, so here we add an one-pixel redundancy.
-            var charSize = fontFace.GetCharSize(glyphIndex, glyph.Metrics, nextChar, 1, 1);
-            var texture = new Texture2D(_graphics, (int)Math.Round(charSize.X), (int)Math.Round(charSize.Y), false, SurfaceFormat.Color);
-
-            glyph.Bitmap.RenderToTexture(texture);
-
-            _texturesDict.Add(@char, texture);
         }
 
         private static readonly char[] LineSeparators = { '\n' };

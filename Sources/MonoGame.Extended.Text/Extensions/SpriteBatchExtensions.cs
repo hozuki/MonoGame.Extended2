@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -50,11 +51,15 @@ namespace MonoGame.Extended.Text.Extensions {
         /// <param name="color">The color of the text.</param>
         /// <returns>Size of the drawn string, in pixels.</returns>
         public static Vector2 DrawString([NotNull] this SpriteBatch spriteBatch, [NotNull] DynamicSpriteFont spriteFont, [CanBeNull] string str, Vector2 location, Vector2 maxBounds, Vector2 scale, Vector2 spacing, Color color) {
+            if (!spriteFont.CanDraw) {
+                throw new InvalidOperationException();
+            }
+
             if (string.IsNullOrEmpty(str)) {
                 return Vector2.Zero;
             }
 
-            return spriteFont.Draw(spriteBatch, str, location, maxBounds, scale, spacing, color);
+            return spriteFont.DrawOrMeasure(spriteBatch, str, location, maxBounds, scale, spacing, color);
         }
 
         /// <summary>
@@ -115,11 +120,15 @@ namespace MonoGame.Extended.Text.Extensions {
         /// <param name="color">The color of the text.</param>
         /// <returns>Size of the drawn string, in pixels.</returns>
         public static Vector2 DrawString([NotNull] this SpriteBatch spriteBatch, [NotNull] DynamicSpriteFont spriteFont, [CanBeNull] string str, Vector2 location, Vector2 maxBounds, Vector2 scale, float characterSpacing, float lineHeight, Color color) {
+            if (!spriteFont.CanDraw) {
+                throw new InvalidOperationException();
+            }
+
             if (string.IsNullOrEmpty(str)) {
                 return Vector2.Zero;
             }
 
-            return spriteFont.Draw(spriteBatch, str, location, maxBounds, scale, characterSpacing, lineHeight, color);
+            return spriteFont.DrawOrMeasure(spriteBatch, str, location, maxBounds, scale, characterSpacing, lineHeight, color);
         }
 
     }

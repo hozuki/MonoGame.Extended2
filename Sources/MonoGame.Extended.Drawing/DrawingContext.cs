@@ -85,6 +85,10 @@ namespace MonoGame.Extended.Drawing {
 
         public static GraphicsBackend GraphicsBackend {
             set {
+                if (value == GraphicsBackend.Unknown) {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "You cannot set graphics backend to unknown.");
+                }
+
                 if (_graphicsBackend != GraphicsBackend.Unknown) {
                     throw new InvalidOperationException();
                 }

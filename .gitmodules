@@ -1,0 +1,6 @@
+[submodule "thirdparty/LibTessDotNet"]
+	path = thirdparty/LibTessDotNet
+	url = https://github.com/speps/LibTessDotNet.git
+[submodule "thirdparty/AdaptiveSubdivision"]
+	path = thirdparty/AdaptiveSubdivision
+	url = https://github.com/OpenMLTD/AdaptiveSubdivision.git

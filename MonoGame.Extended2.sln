@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGame.Extended.DesktopGL.VideoPlayback", "Sources\MonoGame.Extended.DesktopGL.VideoPlayback\MonoGame.Extended.DesktopGL.VideoPlayback.csproj", "{01835222-222F-4FA1-96CC-45C386CF9492}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGame.Extended.VideoPlayback", "Sources\MonoGame.Extended.VideoPlayback\MonoGame.Extended.VideoPlayback.csproj", "{01835222-222F-4FA1-96CC-45C386CF9492}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.DesktopGL.VideoPlayback", "Demos\Demo.DesktopGL.VideoPlayback\Demo.DesktopGL.VideoPlayback.csproj", "{7F322E38-7BCB-4E17-B40C-11C8EF18F96D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.VideoPlayback.DesktopGL", "Demos\Demo.VideoPlayback.DesktopGL\Demo.VideoPlayback.DesktopGL.csproj", "{7F322E38-7BCB-4E17-B40C-11C8EF18F96D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGame.Extended2", "Sources\MonoGame.Extended2\MonoGame.Extended2.csproj", "{C7C3D9DE-41A4-4C21-98FB-336ED38A99D5}"
 EndProject
@@ -26,6 +26,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agg.AdaptiveSubdivision", "thirdparty\AdaptiveSubdivision\src\Agg.AdaptiveSubdivision\Agg.AdaptiveSubdivision.csproj", "{143CA3BD-4CC8-42A9-9228-D9F630096A92}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Drawing", "Demos\Demo.Drawing\Demo.Drawing.csproj", "{A366F5FD-8263-4F2C-A9BA-09E4A67554F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.VideoPlayback.WindowsDX", "Demos\Demo.VideoPlayback.WindowsDX\Demo.VideoPlayback.WindowsDX.csproj", "{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sources", "Sources", "{36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{33D3A2CF-049D-4300-ABDF-9F30E0484EFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -123,14 +129,31 @@ Global
 		{A366F5FD-8263-4F2C-A9BA-09E4A67554F1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A366F5FD-8263-4F2C-A9BA-09E4A67554F1}.ReleaseDouble|Any CPU.ActiveCfg = Release|Any CPU
 		{A366F5FD-8263-4F2C-A9BA-09E4A67554F1}.ReleaseDouble|Any CPU.Build.0 = Release|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.DebugDouble|Any CPU.ActiveCfg = Debug|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.DebugDouble|Any CPU.Build.0 = Debug|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.ReleaseDouble|Any CPU.ActiveCfg = Release|Any CPU
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF}.ReleaseDouble|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{01835222-222F-4FA1-96CC-45C386CF9492} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
+		{7F322E38-7BCB-4E17-B40C-11C8EF18F96D} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
+		{C7C3D9DE-41A4-4C21-98FB-336ED38A99D5} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
+		{1A3F516A-F7B4-4307-BAF0-63309D2E0A6D} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
+		{97417306-EA97-4EEE-85E3-09397E9A18D5} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
+		{126B925D-40BA-4348-90E2-3284B098EE0A} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
+		{A4C3762F-B1D2-4D84-B814-4BBA2805DD0E} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
 		{5EE39029-873A-45A0-9259-2198BF8729F4} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
 		{C0B3B9AF-A9F7-42F0-9C33-C1A7570E299F} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
 		{143CA3BD-4CC8-42A9-9228-D9F630096A92} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
+		{A366F5FD-8263-4F2C-A9BA-09E4A67554F1} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
+		{43ED17DD-8CEB-4F56-BB13-787E77FDE5BF} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8E88228-0CD9-4899-B3A9-746246164A9D}

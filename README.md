@@ -4,7 +4,7 @@ A collection of extensions for MonoGame; a complement of [MonoGame.Extended](htt
 
 ## Projects
 
-- [DesktopGL Video Playback](Sources/MonoGame.Extended.DesktopGL.VideoPlayback): A cross-platform `Video` and `VideoPlayer` implementation for MonoGame (DesktopGL target) using FFmpeg and OpenAL.
+- [Video Playback](Sources/MonoGame.Extended.VideoPlayback): A cross-platform `Video` and `VideoPlayer` implementation for MonoGame (DesktopGL and WindowsDX) using FFmpeg.
 - [Text](Sources/MonoGame.Extended.Text): Text rendering with dynamic sprite fonts, using FreeType.
 
 ## Contributing

@@ -176,7 +176,7 @@ namespace MonoGame.Extended.Framework.Media {
                 value = MathHelper.Clamp(value, 0, 1);
                 _originalVolume = value;
 
-                if (IsMuted) {
+                if (!IsMuted) {
                     _soundEffectInstance.Volume = value;
                 }
             }

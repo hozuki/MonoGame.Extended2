@@ -23,7 +23,7 @@ namespace MonoGame.Extended.Drawing {
             throw new NotImplementedException();
         }
 
-        private static (Effect Effect, bool IsShared) LoadEffect([NotNull] GraphicsDevice graphicsDevice) {
+        private static (Effect Effect, bool IsShared) LoadEffect([NotNull] DrawingContext drawingContext) {
             throw new NotImplementedException();
         }
 

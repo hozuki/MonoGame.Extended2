@@ -62,6 +62,7 @@
     <Compile Include="CombineMode.cs" />
     <Compile Include="DashStyle.cs" />
     <Compile Include="DrawingContext.cs" />
+    <Compile Include="DrawingContextEffectResources.cs" />
     <Compile Include="Effects\BrushEffect.cs" />
     <Compile Include="Effects\EffectResource.cs" />
     <Compile Include="Effects\EffectResource.EffectNames.cs" />

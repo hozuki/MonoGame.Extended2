@@ -18,12 +18,12 @@ namespace MonoGame.Extended.Drawing {
         public Texture2D Bitmap { get; }
 
         public BitmapBrushProperties Properties { get; }
-        
+
         protected override void RenderInternal(Triangle[] vertices, Effect effect) {
             throw new NotImplementedException();
         }
-        
-        private static (Effect Effect, bool IsShared) LoadEffect([NotNull] GraphicsDevice graphicsDevice) {
+
+        private static (Effect Effect, bool IsShared) LoadEffect([NotNull] DrawingContext drawingContext) {
             throw new NotImplementedException();
         }
 

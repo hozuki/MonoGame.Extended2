@@ -1,5 +1,4 @@
 ﻿using System;
-using MonoGame.Extended.Drawing;
 
 namespace Demo.Drawing {
     /// <summary>
@@ -11,8 +10,6 @@ namespace Demo.Drawing {
         /// </summary>
         [STAThread]
         private static void Main() {
-            DrawingContext.GraphicsBackend = GraphicsBackend.OpenGL;
-
             using (var game = new Game1()) {
                 game.Run();
             }

@@ -1,8 +1,6 @@
-﻿using System;
-using JetBrains.Annotations;
-using Microsoft.Xna.Framework;
+﻿using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
-using EffectLoaderFunc = System.Func<Microsoft.Xna.Framework.Graphics.GraphicsDevice, (Microsoft.Xna.Framework.Graphics.Effect Effect, bool IsShared)>;
+using EffectLoaderFunc = System.Func<MonoGame.Extended.Drawing.DrawingContext, (Microsoft.Xna.Framework.Graphics.Effect Effect, bool IsShared)>;
 
 namespace MonoGame.Extended.Drawing {
     public abstract class Brush : DisposableBase {
@@ -14,7 +12,7 @@ namespace MonoGame.Extended.Drawing {
             DrawingContext = context;
             BrushProperties = brushProperties;
 
-            (_brushEffect, _isEffectShared) = effectLoaderFunc(context.GraphicsDevice);
+            (_brushEffect, _isEffectShared) = effectLoaderFunc(context);
         }
 
         public BrushProperties BrushProperties { get; }

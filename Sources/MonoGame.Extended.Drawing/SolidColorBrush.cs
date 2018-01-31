@@ -29,7 +29,7 @@ namespace MonoGame.Extended.Drawing {
 
             // Move to the fourth quadrant.
             var projection = Matrix.CreateOrthographicOffCenter(0, clientWidth, -clientHeight, 0, 0.5f, 10f);
-//            var projection = Matrix.CreateOrthographic(clientWidth, clientHeight, 0.5f, 100f);
+            //            var projection = Matrix.CreateOrthographic(clientWidth, clientHeight, 0.5f, 100f);
 
             brushEffect.SetWorldViewProjection(BrushEffect.DefaultWorld, BrushEffect.DefaultView, projection);
             brushEffect.SetOpacity(props.Opacity);
@@ -79,12 +79,12 @@ namespace MonoGame.Extended.Drawing {
             }
         }
 
-        private static (Effect Effect, bool IsShared) LoadEffect([NotNull] GraphicsDevice graphicsDevice) {
+        private static (Effect Effect, bool IsShared) LoadEffect([NotNull] DrawingContext drawingContext) {
             if (_solidBrushEffect != null) {
                 return (_solidBrushEffect, true);
             }
 
-            _solidBrushEffect = SolidBrushEffect.Create(graphicsDevice);
+            _solidBrushEffect = SolidBrushEffect.Create(drawingContext);
 
             return (_solidBrushEffect, true);
         }

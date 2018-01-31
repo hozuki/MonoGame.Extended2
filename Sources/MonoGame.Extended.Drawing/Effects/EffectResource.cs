@@ -9,14 +9,16 @@ namespace MonoGame.Extended.Drawing.Effects {
             ResourceName = effectResourceName;
         }
 
-        internal static EffectResource SolidBrush => CreateEffectResource(SolidBrushResourceNames);
+        internal static EffectResource CreateSolidBrushEffect([NotNull] DrawingContext drawingContext) {
+            return CreateEffectResource(drawingContext.Backend, SolidBrushResourceNames);
+        }
 
         internal string ResourceName { get; }
 
         internal byte[] Bytecode => _bytecode ?? (_bytecode = Load(ResourceName));
 
-        private static EffectResource CreateEffectResource(IReadOnlyDictionary<GraphicsBackend, string> resourceMap) {
-            var resourceName = resourceMap[DrawingContext.GraphicsBackend];
+        private static EffectResource CreateEffectResource(GraphicsBackend backend, [NotNull] IReadOnlyDictionary<GraphicsBackend, string> resourceMap) {
+            var resourceName = resourceMap[backend];
             return new EffectResource(resourceName);
         }
 

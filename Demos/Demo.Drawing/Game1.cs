@@ -40,7 +40,7 @@ namespace Demo.Drawing {
         /// </summary>
         protected override void LoadContent() {
             // TODO: use this.Content to load your game content here
-            _drawingContext = new DrawingContext(GraphicsDevice);
+            _drawingContext = new DrawingContext(GraphicsDevice, GraphicsBackend.OpenGL);
 
             _brush1 = new SolidColorBrush(_drawingContext, Color.Black);
             _brush2 = new SolidColorBrush(_drawingContext, Color.Red);
@@ -128,9 +128,9 @@ namespace Demo.Drawing {
 
             // TODO: Add your drawing code here
             // https://stackoverflow.com/questions/33977226/drawing-bezier-curves-in-monogame-xna-produces-scratchy-lines ?
-            DrawingContext.FillGeometry(_brush1, _pathGeometry1);
-            DrawingContext.FillGeometry(_brush2, _pathGeometry2);
-            DrawingContext.FillGeometry(_brush3, _pathGeometry3);
+            _drawingContext.FillGeometry(_brush1, _pathGeometry1);
+            _drawingContext.FillGeometry(_brush2, _pathGeometry2);
+            _drawingContext.FillGeometry(_brush3, _pathGeometry3);
 
             var fps = 1 / gameTime.ElapsedGameTime.TotalSeconds;
             Window.Title = "FPS: " + fps.ToString("0.00");

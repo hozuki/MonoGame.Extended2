@@ -8,10 +8,10 @@ namespace MonoGame.Extended.Drawing.Effects {
             : base(graphicsDevice, effectCode) {
         }
 
-        internal static SolidBrushEffect Create([NotNull] GraphicsDevice graphicsDevice) {
-            var bytecode = EffectResource.SolidBrush.Bytecode;
+        internal static SolidBrushEffect Create([NotNull] DrawingContext drawingContext) {
+            var bytecode = drawingContext.EffectResources.SolidBrush.Bytecode;
 
-            return new SolidBrushEffect(graphicsDevice, bytecode);
+            return new SolidBrushEffect(drawingContext.GraphicsDevice, bytecode);
         }
 
         internal override void Apply() {

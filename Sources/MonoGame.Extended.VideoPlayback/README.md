@@ -1,4 +1,4 @@
-# MonoGame.Extended.DesktopGL.VideoPlayback
+# MonoGame.Extended.VideoPlayback
 
 A cross-platform `Video` and `VideoPlayer` implementation for MonoGame (DesktopGL and WindowsDX) using FFmpeg.
 

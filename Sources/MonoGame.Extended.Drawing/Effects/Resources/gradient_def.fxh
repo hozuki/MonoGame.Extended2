@@ -1,13 +1,15 @@
-﻿#define MAX_GRADIENT_STOPS (16)
-
-struct GradientStop {
-    float Position;
-    float4 Color;
-};
+﻿#define MAX_GRADIENT_STOPS (32)
 
 cbuffer cbGradient {
-    GradientStop g_gradientStops[MAX_GRADIENT_STOPS];
-    int g_numGradientStop;
-    int g_gamma;
-    int g_extendMode;
+    float g_gradientStopPositions[MAX_GRADIENT_STOPS];
+    float4 g_gradientStopColors[MAX_GRADIENT_STOPS];
+    int g_numGradientStops;
 }
+
+#define GRADIENT_PARAMS_DECL uniform int gamma, uniform int extendMode
+
+#define GAMMA_SRGB (0)
+#define GAMMA_LINEAR (1)
+#define EXTEND_MODE_CLAMP (0)
+#define EXTEND_MODE_WRAP (1)
+#define EXTEND_MODE_MIRROR (2)

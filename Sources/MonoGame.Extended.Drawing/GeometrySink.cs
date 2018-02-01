@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended.Drawing.Geometries;
 
 namespace MonoGame.Extended.Drawing {
     public sealed class GeometrySink : Sink {
@@ -100,6 +101,16 @@ namespace MonoGame.Extended.Drawing {
         }
 
         internal Figure[] Figures { get; private set; }
+
+        /// <summary>
+        /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
+        /// </summary>
+        internal void AddMathArc(MathArcSegment arc) {
+            EnsureNotClosed();
+            EnsureFigureBegun();
+
+            _currentFigure.Add(new GeometryElement(arc));
+        }
 
         protected override void OnClosed() {
             Figures = _figures.ToArray();

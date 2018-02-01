@@ -5,10 +5,13 @@ namespace MonoGame.Extended.Drawing {
     internal sealed class DrawingContextEffectResources {
 
         internal DrawingContextEffectResources([NotNull] DrawingContext drawingContext) {
-            SolidBrush = EffectResource.CreateSolidBrushEffect(drawingContext);
+            SolidColorBrush = EffectResource.CreateSolidColorBrushEffectResource(drawingContext);
+            LinearGradientBrush = EffectResource.CreateLinearGradientBrushEffectResource(drawingContext);
         }
 
-        internal EffectResource SolidBrush { get; }
+        internal EffectResource SolidColorBrush { get; }
+
+        internal EffectResource LinearGradientBrush { get; }
 
     }
 }

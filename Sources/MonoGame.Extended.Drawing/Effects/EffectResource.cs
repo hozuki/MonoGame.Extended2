@@ -9,8 +9,12 @@ namespace MonoGame.Extended.Drawing.Effects {
             ResourceName = effectResourceName;
         }
 
-        internal static EffectResource CreateSolidBrushEffect([NotNull] DrawingContext drawingContext) {
-            return CreateEffectResource(drawingContext.Backend, SolidBrushResourceNames);
+        internal static EffectResource CreateSolidColorBrushEffectResource([NotNull] DrawingContext drawingContext) {
+            return CreateEffectResource(drawingContext.Backend, SolidColorBrushResourceNames);
+        }
+
+        internal static EffectResource CreateLinearGradientBrushEffectResource([NotNull] DrawingContext drawingContext) {
+            return CreateEffectResource(drawingContext.Backend, LinearGradientBrushResourceNames);
         }
 
         internal string ResourceName { get; }

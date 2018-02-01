@@ -27,7 +27,7 @@ PS_IN vs(in VS_IN input) {
     return output;
 }
 
-float4 ps(in PS_IN input) {
+float4 ps(in PS_IN input) : SV_TARGET {
     float4 output = g_texture.Sample(sam, input.TexCoord);
 
     output.a *= g_opacity;
@@ -35,4 +35,9 @@ float4 ps(in PS_IN input) {
     return output;
 }
 
-#include "footer.fxh"
+technique BitmapBrush {
+    pass {
+		VertexShader = compile VS_SHADERMODEL vs();
+		PixelShader = compile PS_SHADERMODEL ps();
+    }
+};

@@ -33,6 +33,17 @@ namespace MonoGame.Extended.Drawing {
             _brushEffect = null;
         }
 
+        protected static readonly RasterizerState DefaultBrushRasterizerState = new RasterizerState {
+            CullMode = CullMode.None,
+            MultiSampleAntiAlias = true,
+        };
+
+        protected static readonly DepthStencilState DefaultBrushDepthStencilState = new DepthStencilState {
+            DepthBufferEnable = false,
+            DepthBufferFunction = CompareFunction.Always,
+            DepthBufferWriteEnable = true
+        };
+
         private Effect _brushEffect;
         private readonly bool _isEffectShared;
 

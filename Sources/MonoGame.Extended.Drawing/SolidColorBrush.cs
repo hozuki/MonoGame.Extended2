@@ -20,43 +20,30 @@ namespace MonoGame.Extended.Drawing {
         public Color Color { get; }
 
         protected override void RenderInternal(Triangle[] triangles, Effect effect) {
-            var brushEffect = (SolidBrushEffect)effect;
+            var brushEffect = (SolidColorBrushEffect)effect;
             var graphicsDevice = DrawingContext.GraphicsDevice;
-            var presentParams = graphicsDevice.PresentationParameters;
-            var clientWidth = presentParams.BackBufferWidth;
-            var clientHeight = presentParams.BackBufferHeight;
             var props = BrushProperties;
 
-            // Move to the fourth quadrant.
-            var projection = Matrix.CreateOrthographicOffCenter(0, clientWidth, -clientHeight, 0, 0.5f, 10f);
-            //            var projection = Matrix.CreateOrthographic(clientWidth, clientHeight, 0.5f, 100f);
+            var projection = DrawingContext.DefaultOrthographicProjection;
 
             brushEffect.SetWorldViewProjection(BrushEffect.DefaultWorld, BrushEffect.DefaultView, projection);
-            brushEffect.SetOpacity(props.Opacity);
+            brushEffect.Opacity = props.Opacity;
+            brushEffect.Color = Color.ToVector4();
 
-            graphicsDevice.RasterizerState = DefaultRasterizerState;
-            graphicsDevice.DepthStencilState = DefaultDepthStencilState;
+            graphicsDevice.RasterizerState = DefaultBrushRasterizerState;
+            graphicsDevice.DepthStencilState = DefaultBrushDepthStencilState;
 
             brushEffect.Apply();
 
-            var colorf = Color.ToVector4();
-            var vertices = new Vertex[triangles.Length * 3];
+            var vertices = new Vector2[triangles.Length * 3];
             var indices = new uint[triangles.Length * 3];
 
             for (var i = 0; i < triangles.Length; ++i) {
                 var s = i * 3;
-                vertices[s] = new Vertex {
-                    Position = Matrix3x2.Transform(props.Transform, triangles[i].Point1),
-                    Color = colorf
-                };
-                vertices[s + 1] = new Vertex {
-                    Position = Matrix3x2.Transform(props.Transform, triangles[i].Point2),
-                    Color = colorf
-                };
-                vertices[s + 2] = new Vertex {
-                    Position = Matrix3x2.Transform(props.Transform, triangles[i].Point3),
-                    Color = colorf
-                };
+
+                vertices[s] = Matrix3x2.Transform(props.Transform, triangles[i].Point1);
+                vertices[s + 1] = Matrix3x2.Transform(props.Transform, triangles[i].Point2);
+                vertices[s + 2] = Matrix3x2.Transform(props.Transform, triangles[i].Point3);
             }
 
             for (var i = 0; i < indices.Length; ++i) {
@@ -80,41 +67,18 @@ namespace MonoGame.Extended.Drawing {
         }
 
         private static (Effect Effect, bool IsShared) LoadEffect([NotNull] DrawingContext drawingContext) {
-            if (_solidBrushEffect != null) {
-                return (_solidBrushEffect, true);
+            if (_solidColorBrushEffect == null) {
+                _solidColorBrushEffect = SolidColorBrushEffect.Create(drawingContext);
             }
 
-            _solidBrushEffect = SolidBrushEffect.Create(drawingContext);
-
-            return (_solidBrushEffect, true);
+            return (_solidColorBrushEffect, true);
         }
 
         private static readonly VertexElement[] VertexElements = {
-            new VertexElement(0, VertexElementFormat.Vector2, VertexElementUsage.Position, 0),
-            new VertexElement(8, VertexElementFormat.Vector4, VertexElementUsage.Color, 0),
+            new VertexElement(0, VertexElementFormat.Vector2, VertexElementUsage.Position, 0)
         };
 
-        private static Effect _solidBrushEffect;
-
-        private static readonly RasterizerState DefaultRasterizerState = new RasterizerState {
-            CullMode = CullMode.None,
-            MultiSampleAntiAlias = true
-        };
-
-        private static readonly DepthStencilState DefaultDepthStencilState = new DepthStencilState {
-            DepthBufferEnable = false,
-            DepthBufferFunction = CompareFunction.Always,
-            DepthBufferWriteEnable = true
-        };
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct Vertex {
-
-            internal Vector2 Position;
-
-            internal Vector4 Color;
-
-        }
+        private static Effect _solidColorBrushEffect;
 
     }
 }

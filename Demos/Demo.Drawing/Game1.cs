@@ -45,6 +45,19 @@ namespace Demo.Drawing {
             _brush1 = new SolidColorBrush(_drawingContext, Color.Black);
             _brush2 = new SolidColorBrush(_drawingContext, Color.Red);
             _brush3 = new SolidColorBrush(_drawingContext, Color.Yellow);
+            _brush4 = new SolidColorBrush(_drawingContext, Color.Purple);
+            _brush5 = new SolidColorBrush(_drawingContext, Color.Blue);
+
+            _brush6 = new LinearGradientBrush(_drawingContext,
+                new LinearGradientBrushProperties {
+                    StartPoint = new Vector2(305, 305),
+                    EndPoint = new Vector2(405, 405)
+                }, new GradientStopCollection(new[] {
+                    new GradientStop {Color = Color.Red, Position = 0.0f},
+                    new GradientStop {Color = Color.Yellow, Position = 0.4f},
+                    new GradientStop {Color = Color.Blue, Position = 0.8f},
+                    new GradientStop {Color = Color.Cyan, Position = 1.0f}
+                }, Gamma.Linear, ExtendMode.Mirror));
 
             var pathGeometry = new PathGeometry();
             _pathGeometry1 = pathGeometry;
@@ -91,6 +104,24 @@ namespace Demo.Drawing {
             });
             sink.EndFigure(FigureEnd.Closed);
             sink.Close();
+
+            _ellipseGeometry4 = new EllipseGeometry(new Ellipse {
+                Point = new Vector2(400, 50),
+                RadiusX = 50,
+                RadiusY = 10
+            });
+
+            _roundedRectangleGeometry5 = new RoundedRectangleGeometry(new RoundedRectangle {
+                RadiusX = 30,
+                RadiusY = 20,
+                Rectangle = new RectangleF(0, 300, 100, 100)
+            });
+
+            _ellipseGeometry6 = new EllipseGeometry(new Ellipse {
+                Point = new Vector2(350, 300),
+                RadiusX = 160,
+                RadiusY = 120
+            });
         }
 
         /// <summary>
@@ -102,6 +133,9 @@ namespace Demo.Drawing {
             _brush1.Dispose();
             _brush2.Dispose();
             _brush3.Dispose();
+            _brush4.Dispose();
+            _brush5.Dispose();
+            _brush6.Dispose();
         }
 
         /// <summary>
@@ -131,6 +165,9 @@ namespace Demo.Drawing {
             _drawingContext.FillGeometry(_brush1, _pathGeometry1);
             _drawingContext.FillGeometry(_brush2, _pathGeometry2);
             _drawingContext.FillGeometry(_brush3, _pathGeometry3);
+            _drawingContext.FillGeometry(_brush4, _ellipseGeometry4);
+            _drawingContext.FillGeometry(_brush5, _roundedRectangleGeometry5);
+            _drawingContext.FillGeometry(_brush6, _ellipseGeometry6);
 
             var fps = 1 / gameTime.ElapsedGameTime.TotalSeconds;
             Window.Title = "FPS: " + fps.ToString("0.00");
@@ -144,10 +181,16 @@ namespace Demo.Drawing {
         private Brush _brush1;
         private Brush _brush2;
         private Brush _brush3;
+        private Brush _brush4;
+        private Brush _brush5;
+        private Brush _brush6;
 
         private PathGeometry _pathGeometry1;
         private PathGeometry _pathGeometry2;
         private PathGeometry _pathGeometry3;
+        private EllipseGeometry _ellipseGeometry4;
+        private RoundedRectangleGeometry _roundedRectangleGeometry5;
+        private EllipseGeometry _ellipseGeometry6;
 
     }
 }

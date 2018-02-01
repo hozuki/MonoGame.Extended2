@@ -19,7 +19,7 @@ namespace MonoGame.Extended.Drawing {
 
         public BitmapBrushProperties Properties { get; }
 
-        protected override void RenderInternal(Triangle[] vertices, Effect effect) {
+        protected override void RenderInternal(Triangle[] triangles, Effect effect) {
             throw new NotImplementedException();
         }
 

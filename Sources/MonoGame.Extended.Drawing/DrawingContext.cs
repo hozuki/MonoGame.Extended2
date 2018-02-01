@@ -1,15 +1,19 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Drawing.Geometries;
 
 namespace MonoGame.Extended.Drawing {
-    public sealed class DrawingContext {
+    public sealed class DrawingContext : DisposableBase {
 
         public DrawingContext([NotNull] GraphicsDevice graphicsDevice, GraphicsBackend backend) {
             GraphicsDevice = graphicsDevice;
             Backend = backend;
             EffectResources = new DrawingContextEffectResources(this);
+
+            graphicsDevice.DeviceReset += GraphicsDevice_DeviceReset;
+            UpdateProjectionMatrix();
         }
 
         public GraphicsDevice GraphicsDevice { get; }
@@ -87,6 +91,26 @@ namespace MonoGame.Extended.Drawing {
         }
 
         internal DrawingContextEffectResources EffectResources { get; }
+
+        /// <summary>
+        /// This orthographic projection matrix has a NEGATIVE Y position (i.e. y to 0), so it
+        /// helps drawing elements to move to the fourth quadrant.
+        /// </summary>
+        internal Matrix DefaultOrthographicProjection { get; private set; }
+
+        protected override void Dispose(bool disposing) {
+            GraphicsDevice.DeviceReset -= GraphicsDevice_DeviceReset;
+        }
+
+        private void UpdateProjectionMatrix() {
+            var viewport = GraphicsDevice.Viewport;
+
+            DefaultOrthographicProjection = Matrix.CreateOrthographicOffCenter(0, viewport.Width, viewport.Height, 0, 0.5f, 10f);
+        }
+
+        private void GraphicsDevice_DeviceReset(object sender, EventArgs e) {
+            UpdateProjectionMatrix();
+        }
 
     }
 }

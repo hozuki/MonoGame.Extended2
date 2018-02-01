@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
+using MonoGame.Extended.Drawing.Geometries;
 
 namespace MonoGame.Extended.Drawing {
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
@@ -29,6 +30,15 @@ namespace MonoGame.Extended.Drawing {
             _quadraticBezierSegment = quadraticBezierSegment;
         }
 
+        /// <summary>
+        /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
+        /// </summary>
+        internal GeometryElement(MathArcSegment mathArcSegment)
+            : this() {
+            _type = GeometryElementType.MathArc;
+            _mathArcSegment = mathArcSegment;
+        }
+
         internal GeometryElementType Type {
             get => _type;
             set => _type = value;
@@ -54,6 +64,14 @@ namespace MonoGame.Extended.Drawing {
             set => _quadraticBezierSegment = value;
         }
 
+        /// <summary>
+        /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
+        /// </summary>
+        internal MathArcSegment MathArcSegment {
+            get => _mathArcSegment;
+            set => _mathArcSegment = value;
+        }
+
         [FieldOffset(0)]
         private GeometryElementType _type;
 
@@ -65,6 +83,8 @@ namespace MonoGame.Extended.Drawing {
         private BezierSegment _bezierSegment;
         [FieldOffset(4)]
         private QuadraticBezierSegment _quadraticBezierSegment;
+        [FieldOffset(4)]
+        private MathArcSegment _mathArcSegment;
 
     }
 }

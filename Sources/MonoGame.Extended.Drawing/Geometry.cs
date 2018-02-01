@@ -234,6 +234,7 @@ namespace MonoGame.Extended.Drawing {
                 switch (element.Type) {
                     case GeometryElementType.Line: {
                             AddPoint(transform, element.LineSegment, vertices);
+                            lastPoint = element.LineSegment;
                             break;
                         }
                     case GeometryElementType.Arc: {
@@ -243,7 +244,8 @@ namespace MonoGame.Extended.Drawing {
 
                             var divided = Subdivider.DivideSvgArc(lastPoint.X, lastPoint.Y, arc.Point.X, arc.Point.Y,
                                 arc.Size.X, arc.Size.Y, -MathHelper.ToRadians(arc.RotationAngle),
-                                arc.ArcSize == ArcSize.Large, arc.SweepDirection == SweepDirection.Clockwise);
+                                arc.ArcSize == ArcSize.Large, arc.SweepDirection == SweepDirection.Clockwise,
+                                flatteningTolerance);
 
                             AddPoints(transform, divided, vertices);
                             lastPoint = arc.Point;
@@ -265,6 +267,16 @@ namespace MonoGame.Extended.Drawing {
 
                             AddPoints(transform, divided, vertices);
                             lastPoint = bezier.Point2;
+                            break;
+                        }
+                    case GeometryElementType.MathArc: {
+                            var mathArc = element.MathArcSegment;
+                            var divided = Subdivider.DivideArc(mathArc.Center.X, mathArc.Center.Y, mathArc.Radius.X, mathArc.Radius.Y,
+                                MathHelper.ToRadians(mathArc.StartAngle), MathHelper.ToRadians(mathArc.SweepAngle), MathHelper.ToRadians(mathArc.RotationAngle),
+                                flatteningTolerance);
+
+                            AddPoints(transform, divided, vertices);
+                            // Not setting lastPoint because we don't need it. See notes of MathArcSegment.
                             break;
                         }
                     default:

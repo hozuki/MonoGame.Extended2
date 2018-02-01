@@ -67,7 +67,9 @@
     <Compile Include="Effects\EffectResource.cs" />
     <Compile Include="Effects\EffectResource.EffectNames.cs" />
     <Compile Include="Effects\EffectResource.ResourceMaps.cs" />
-    <Compile Include="Effects\SolidBrushEffect.cs" />
+    <Compile Include="Effects\GradientBrushEffect.cs" />
+    <Compile Include="Effects\LinearGradientBrushEffect.cs" />
+    <Compile Include="Effects\SolidColorBrushEffect.cs" />
     <Compile Include="Ellipse.cs" />
     <Compile Include="ExtendMode.cs" />
     <Compile Include="Figure.cs" />
@@ -93,6 +95,7 @@
     <Compile Include="LinearGradientBrushProperties.cs" />
     <Compile Include="LineJoin.cs" />
     <Compile Include="Framework\Matrix3x2.cs" />
+    <Compile Include="MathArcSegment.cs" />
     <Compile Include="Mesh.cs" />
     <Compile Include="Pen.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -125,14 +128,18 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Effects\Resources\BitmapBrush.fx" />
+    <EmbeddedResource Include="Effects\Resources\BitmapBrush.fx.dx11.mgfxo" />
+    <EmbeddedResource Include="Effects\Resources\BitmapBrush.fx.ogl.mgfxo" />
     <None Include="Effects\Resources\brush_def.fxh" />
-    <None Include="Effects\Resources\footer.fxh" />
+    <None Include="Effects\Resources\compile_effects.bat" />
     <None Include="Effects\Resources\gradient_def.fxh" />
-    <Content Include="Effects\Resources\LinearGradientStopBrush.fx" />
+    <Content Include="Effects\Resources\LinearGradientBrush.fx" />
+    <EmbeddedResource Include="Effects\Resources\LinearGradientBrush.fx.dx11.mgfxo" />
+    <EmbeddedResource Include="Effects\Resources\LinearGradientBrush.fx.ogl.mgfxo" />
     <None Include="Effects\Resources\monogame_header.fxh" />
-    <EmbeddedResource Include="Effects\Resources\SolidBrush.d3d.mgfxo" />
-    <EmbeddedResource Include="Effects\Resources\SolidBrush.ogl.mgfxo" />
-    <Content Include="Effects\Resources\SolidBrush.fx" />
+    <EmbeddedResource Include="Effects\Resources\SolidColorBrush.fx.dx11.mgfxo" />
+    <EmbeddedResource Include="Effects\Resources\SolidColorBrush.fx.ogl.mgfxo" />
+    <Content Include="Effects\Resources\SolidColorBrush.fx" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

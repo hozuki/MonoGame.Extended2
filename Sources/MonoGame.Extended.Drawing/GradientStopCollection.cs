@@ -14,7 +14,18 @@ namespace MonoGame.Extended.Drawing {
                 throw new ArgumentException($"GradientStopCollection supports maximum {MaximumGradientStops} gradient stops.", nameof(gradientStops));
             }
 
-            GradientStops = gradientStops;
+            var currentStopPos = gradientStops[0].Position;
+
+            for (var i = 1; i < gradientStops.Length; ++i) {
+                if (gradientStops[i].Position <= currentStopPos) {
+                    throw new ArgumentException($"Position of gradient stop #{i} is less than its predecessor.");
+                }
+
+                currentStopPos = gradientStops[i].Position;
+            }
+
+            GradientStopsDirect = (GradientStop[])gradientStops.Clone();
+            GradientStops = GradientStopsDirect;
             Gamma = gamma;
             ExtendMode = extendMode;
         }
@@ -25,7 +36,9 @@ namespace MonoGame.Extended.Drawing {
 
         public ExtendMode ExtendMode { get; }
 
-        private const int MaximumGradientStops = 16;
+        internal GradientStop[] GradientStopsDirect { get; }
+
+        internal const int MaximumGradientStops = 32;
 
     }
 }

@@ -170,8 +170,16 @@ namespace MonoGame.Extended.Overlay {
             }
         }
 
-        public void SetClipPath([CanBeNull] Path clipPath, bool antialiased) {
-            _canvas?.ClipPath(clipPath?.NativePath, antialias: antialiased);
+        public void SetClipPath([NotNull] Path clipPath, bool antialiased) {
+            _canvas?.ClipPath(clipPath.NativePath, antialias: antialiased);
+        }
+
+        public int SaveState() {
+            return _canvas?.Save() ?? -1;
+        }
+
+        public void RestoreState() {
+            _canvas?.Restore();
         }
 
         protected override void Dispose(bool disposing) {

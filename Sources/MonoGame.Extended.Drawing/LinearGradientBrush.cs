@@ -20,7 +20,7 @@ namespace MonoGame.Extended.Drawing {
 
         public LinearGradientBrushProperties Properties { get; }
 
-        protected override void RenderInternal(Triangle[] triangles, Effect effect) {
+        protected override void RenderInternal(Triangle[] triangles, Effect effect, Matrix3x2? transform) {
             var brushEffect = (LinearGradientBrushEffect)effect;
             var graphicsDevice = DrawingContext.GraphicsDevice;
             var brushProps = BrushProperties;
@@ -29,7 +29,8 @@ namespace MonoGame.Extended.Drawing {
 
             var projection = DrawingContext.DefaultOrthographicProjection;
 
-            brushEffect.SetWorldViewProjection(BrushEffect.DefaultWorld, BrushEffect.DefaultView, projection);
+            var world = transform?.ToMatrix4x4() ?? BrushEffect.DefaultWorld;
+            brushEffect.SetWorldViewProjection(world, BrushEffect.DefaultView, projection);
             brushEffect.Opacity = brushProps.Opacity;
             brushEffect.SetGradientStops(gsc.GradientStopsDirect);
             brushEffect.Gamma = gsc.Gamma;

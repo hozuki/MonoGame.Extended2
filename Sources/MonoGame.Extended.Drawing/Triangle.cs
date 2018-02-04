@@ -9,5 +9,9 @@ namespace MonoGame.Extended.Drawing {
 
         public Vector2 Point3 { get; set; }
 
+        public override string ToString() {
+            return $"{Point1} {Point2} {Point3}";
+        }
+
     }
 }

@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>a366f5fd-8263-4f2c-a9ba-09e4a67554f1</ProjectGuid>
+    <ProjectGuid>{A366F5FD-8263-4F2C-A9BA-09E4A67554F1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Demo.Drawing</RootNamespace>
@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Prefer32Bit>true</Prefer32Bit>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
@@ -32,7 +32,7 @@
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Prefer32Bit>true</Prefer32Bit>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
@@ -104,11 +104,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="app.manifest" />
+    <None Include="Content\OpenSans-Regular.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Sources\MonoGame.Extended.Drawing\MonoGame.Extended.Drawing.csproj">
       <Project>{a4c3762f-b1d2-4d84-b814-4bba2805dd0e}</Project>
       <Name>MonoGame.Extended.Drawing</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Sources\MonoGame.Extended.Text\MonoGame.Extended.Text.csproj">
+      <Project>{1a3f516a-f7b4-4307-baf0-63309d2e0a6d}</Project>
+      <Name>MonoGame.Extended.Text</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Sources\MonoGame.Extended2\MonoGame.Extended2.csproj">
       <Project>{c7c3d9de-41a4-4c21-98fb-336ed38a99d5}</Project>

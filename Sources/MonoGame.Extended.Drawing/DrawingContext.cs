@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -75,7 +76,7 @@ namespace MonoGame.Extended.Drawing {
                 return;
             }
 
-            brush.Render(mesh.Triangles);
+            brush.Render(mesh.Triangles, _currentTransform);
         }
 
         public void FillRectangle([NotNull] Brush brush, RectangleF rectangle) {
@@ -89,6 +90,35 @@ namespace MonoGame.Extended.Drawing {
 
             FillGeometry(brush, roundedRectGeo);
         }
+
+        #region Transforms
+        public void SetCurrentTransform(Matrix3x2 transform) {
+            _currentTransform = transform;
+        }
+
+        public void Translate(float x, float y) {
+            _currentTransform *= Matrix3x2.CreateTranslation(x, y);
+        }
+
+        public void Translate(Vector2 translation) {
+            _currentTransform *= Matrix3x2.CreateTranslation(translation);
+        }
+
+        public void PushTransform() {
+            _transforms.Push(_currentTransform);
+        }
+
+        public Matrix3x2 PopTransform() {
+            if (_transforms.Count == 0) {
+                throw new InvalidOperationException("No pushed transforms in stack.");
+            }
+
+            var popped = _transforms.Pop();
+            _currentTransform = popped;
+
+            return popped;
+        }
+        #endregion
 
         internal DrawingContextEffectResources EffectResources { get; }
 
@@ -111,6 +141,9 @@ namespace MonoGame.Extended.Drawing {
         private void GraphicsDevice_DeviceReset(object sender, EventArgs e) {
             UpdateProjectionMatrix();
         }
+
+        private Matrix3x2 _currentTransform = Matrix3x2.Identity;
+        private readonly Stack<Matrix3x2> _transforms = new Stack<Matrix3x2>();
 
     }
 }

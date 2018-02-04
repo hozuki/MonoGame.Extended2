@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoGame.Extended.Drawing {
@@ -19,7 +20,7 @@ namespace MonoGame.Extended.Drawing {
 
         public BitmapBrushProperties Properties { get; }
 
-        protected override void RenderInternal(Triangle[] triangles, Effect effect) {
+        protected override void RenderInternal(Triangle[] triangles, Effect effect, Matrix3x2? transform) {
             throw new NotImplementedException();
         }
 

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Drawing;
 using MonoGame.Extended.Drawing.Geometries;
+using MonoGame.Extended.Text;
 
 namespace Demo.Drawing {
     /// <summary>
@@ -30,6 +31,9 @@ namespace Demo.Drawing {
             _graphicsDeviceManager.GraphicsProfile = GraphicsProfile.HiDef;
             _graphicsDeviceManager.PreferMultiSampling = true;
             _graphicsDeviceManager.ApplyChanges();
+
+            _fontManager = new FontManager();
+            _font = _fontManager.LoadFont("Content/OpenSans-Regular.ttf", 50);
 
             base.Initialize();
         }
@@ -122,6 +126,8 @@ namespace Demo.Drawing {
                 RadiusX = 160,
                 RadiusY = 120
             });
+
+            _fontPathGeometry7 = PathGeometry.CreateFromString(_font, "Press space to start");
         }
 
         /// <summary>
@@ -136,6 +142,7 @@ namespace Demo.Drawing {
             _brush4.Dispose();
             _brush5.Dispose();
             _brush6.Dispose();
+            _fontManager?.Dispose();
         }
 
         /// <summary>
@@ -169,6 +176,11 @@ namespace Demo.Drawing {
             _drawingContext.FillGeometry(_brush5, _roundedRectangleGeometry5);
             _drawingContext.FillGeometry(_brush6, _ellipseGeometry6);
 
+            _drawingContext.PushTransform();
+            _drawingContext.Translate(0, _font.Size);
+            _drawingContext.FillGeometry(_brush6, _fontPathGeometry7);
+            _drawingContext.PopTransform();
+
             var fps = 1 / gameTime.ElapsedGameTime.TotalSeconds;
             Window.Title = "FPS: " + fps.ToString("0.00");
 
@@ -191,6 +203,10 @@ namespace Demo.Drawing {
         private EllipseGeometry _ellipseGeometry4;
         private RoundedRectangleGeometry _roundedRectangleGeometry5;
         private EllipseGeometry _ellipseGeometry6;
+        private PathGeometry _fontPathGeometry7;
+
+        private FontManager _fontManager;
+        private Font _font;
 
     }
 }

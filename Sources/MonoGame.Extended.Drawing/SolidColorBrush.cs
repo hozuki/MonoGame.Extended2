@@ -19,14 +19,15 @@ namespace MonoGame.Extended.Drawing {
 
         public Color Color { get; }
 
-        protected override void RenderInternal(Triangle[] triangles, Effect effect) {
+        protected override void RenderInternal(Triangle[] triangles, Effect effect, Matrix3x2? transform) {
             var brushEffect = (SolidColorBrushEffect)effect;
             var graphicsDevice = DrawingContext.GraphicsDevice;
             var props = BrushProperties;
 
             var projection = DrawingContext.DefaultOrthographicProjection;
 
-            brushEffect.SetWorldViewProjection(BrushEffect.DefaultWorld, BrushEffect.DefaultView, projection);
+            var world = transform?.ToMatrix4x4() ?? BrushEffect.DefaultWorld;
+            brushEffect.SetWorldViewProjection(world, BrushEffect.DefaultView, projection);
             brushEffect.Opacity = props.Opacity;
             brushEffect.Color = Color.ToVector4();
 

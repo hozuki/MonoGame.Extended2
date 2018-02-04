@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="Extensions\FaceExtensions.cs" />
     <Compile Include="Extensions\FTBitmapExtensions.cs" />
+    <Compile Include="FontHelper.cs" />
     <Compile Include="FontManager.cs" />
     <Compile Include="Extensions\SpriteBatchExtensions.cs" />
     <Compile Include="Font.cs" />

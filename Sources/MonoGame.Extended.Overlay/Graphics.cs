@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
@@ -131,11 +132,53 @@ namespace MonoGame.Extended.Overlay {
             return new Vector2(skBounds.Width, skBounds.Height);
         }
 
+        public void DrawImage([NotNull] Texture2D texture, Vector2 position, bool antialiased = true) {
+            DrawImage(texture, position.X, position.Y, texture.Width, texture.Height, antialiased);
+        }
+
+        public void DrawImage([NotNull] Texture2D texture, float x, float y, bool antialiased = true) {
+            DrawImage(texture, x, y, texture.Width, texture.Height, antialiased);
+        }
+
+        public void DrawImage([NotNull] Texture2D texture, Rectangle destRect, bool antialiased = true) {
+            DrawImage(texture, destRect.X, destRect.Y, destRect.Width, destRect.Height, antialiased);
+        }
+
+        public void DrawImage([NotNull] Texture2D texture, float x, float y, float width, float height, bool antialiased = true) {
+            if (_canvas == null) {
+                return;
+            }
+
+            Debug.Assert(texture.Format == SurfaceFormat.Color);
+
+            using (var paint = new SKPaint()) {
+                paint.IsAntialias = antialiased;
+
+                var imageInfo = new SKImageInfo(texture.Width, texture.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+                var buffer = new int[texture.Width * texture.Height];
+
+                unsafe {
+                    fixed (int* bufferPtr = buffer) {
+                        var ptr = new IntPtr(bufferPtr);
+
+                        using (var image = SKImage.FromPixels(imageInfo, ptr, texture.Width * sizeof(int))) {
+                            var destRect = new SKRect(x, y, x + width, y + height);
+                            _canvas.DrawImage(image, destRect, paint);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void SetClipPath([CanBeNull] Path clipPath, bool antialiased) {
+            _canvas?.ClipPath(clipPath?.NativePath, antialias: antialiased);
+        }
+
         protected override void Dispose(bool disposing) {
+            _graphicsDevice.DeviceReset -= GraphicsDevice_DeviceReset;
             _canvas = null;
             _surface?.Dispose();
             _surface = null;
-            _graphicsDevice.DeviceReset -= GraphicsDevice_DeviceReset;
         }
 
         private void DrawOrFillRectangle([NotNull] IPaintProvider provider, float x, float y, float width, float height) {

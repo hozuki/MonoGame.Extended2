@@ -17,6 +17,8 @@ namespace MonoGame.Extended.Overlay {
             graphicsDevice.DeviceReset += GraphicsDevice_DeviceReset;
         }
 
+        public event EventHandler<EventArgs> ContentChanged;
+
         public Texture2D BackBuffer => _backBuffer;
 
         public bool UpdateBackBuffer() {
@@ -191,6 +193,7 @@ namespace MonoGame.Extended.Overlay {
         private void GraphicsDevice_DeviceReset(object sender, EventArgs e) {
             RecreateResources();
             SetDirty();
+            ContentChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private readonly GraphicsDevice _graphicsDevice;

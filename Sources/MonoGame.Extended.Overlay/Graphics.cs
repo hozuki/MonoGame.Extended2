@@ -35,12 +35,10 @@ namespace MonoGame.Extended.Overlay {
 
             var viewport = _graphicsDevice.Viewport;
             var destInfo = new SKImageInfo(viewport.Width, viewport.Height, SKColorType.Rgba8888);
-            var buffer = new int[viewport.Width * viewport.Height];
-
             bool successful;
 
             unsafe {
-                fixed (int* bufferPtr = buffer) {
+                fixed (byte* bufferPtr = _backBufferData) {
                     var ptr = new IntPtr(bufferPtr);
 
                     successful = _surface.ReadPixels(destInfo, ptr, viewport.Width * sizeof(int), 0, 0);
@@ -48,7 +46,7 @@ namespace MonoGame.Extended.Overlay {
             }
 
             if (successful) {
-                _backBuffer.SetData(buffer);
+                _backBuffer.SetData(_backBufferData);
                 _isDirty = false;
             }
 
@@ -145,27 +143,32 @@ namespace MonoGame.Extended.Overlay {
         }
 
         public void DrawImage([NotNull] Texture2D texture, float x, float y, float width, float height, bool antialiased = true) {
+            var buffer = new byte[texture.Width * texture.Height * sizeof(int)];
+
+            texture.GetData(buffer);
+
+            DrawImage(buffer, texture.Format, texture.Width, texture.Height, x, y, width, height, antialiased);
+        }
+
+        public void DrawImage([NotNull] byte[] textureData, SurfaceFormat textureFormat, int textureWidth, int textureHeight, float x, float y, float width, float height, bool antialiased = true) {
             if (_canvas == null) {
                 return;
             }
 
-            Debug.Assert(texture.Format == SurfaceFormat.Color);
+            Debug.Assert(textureFormat == SurfaceFormat.Color);
 
             using (var paint = new SKPaint()) {
                 paint.IsAntialias = antialiased;
                 paint.HintingLevel = SKPaintHinting.Full;
                 paint.IsAutohinted = true;
 
-                var imageInfo = new SKImageInfo(texture.Width, texture.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
-                var buffer = new int[texture.Width * texture.Height];
-
-                texture.GetData(buffer);
+                var imageInfo = new SKImageInfo(textureWidth, textureHeight, SKColorType.Rgba8888, SKAlphaType.Premul);
 
                 unsafe {
-                    fixed (int* bufferPtr = buffer) {
+                    fixed (byte* bufferPtr = textureData) {
                         var ptr = new IntPtr(bufferPtr);
 
-                        using (var image = SKImage.FromPixels(imageInfo, ptr, texture.Width * sizeof(int))) {
+                        using (var image = SKImage.FromPixels(imageInfo, ptr, textureWidth * sizeof(int))) {
                             var destRect = new SKRect(x, y, x + width, y + height);
                             _canvas.DrawImage(image, destRect, paint);
                         }
@@ -224,6 +227,7 @@ namespace MonoGame.Extended.Overlay {
             _canvas = _surface?.Canvas;
 
             _backBuffer = new Texture2D(_graphicsDevice, viewport.Width, viewport.Height, false, SurfaceFormat.Color);
+            _backBufferData = new byte[viewport.Width * viewport.Height * sizeof(int)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -254,6 +258,8 @@ namespace MonoGame.Extended.Overlay {
         private readonly GraphicsDevice _graphicsDevice;
 
         private Texture2D _backBuffer;
+
+        private byte[] _backBufferData;
 
         [CanBeNull]
         private SKSurface _surface;

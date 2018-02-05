@@ -153,9 +153,13 @@ namespace MonoGame.Extended.Overlay {
 
             using (var paint = new SKPaint()) {
                 paint.IsAntialias = antialiased;
+                paint.HintingLevel = SKPaintHinting.Full;
+                paint.IsAutohinted = true;
 
                 var imageInfo = new SKImageInfo(texture.Width, texture.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
                 var buffer = new int[texture.Width * texture.Height];
+
+                texture.GetData(buffer);
 
                 unsafe {
                     fixed (int* bufferPtr = buffer) {

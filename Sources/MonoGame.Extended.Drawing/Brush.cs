@@ -7,8 +7,8 @@ namespace MonoGame.Extended.Drawing {
     public abstract class Brush : DisposableBase {
 
         protected Brush([NotNull] DrawingContext context, [NotNull] EffectLoaderFunc effectLoaderFunc, BrushProperties brushProperties) {
-            Guard.EnsureArgumentNotNull(context, nameof(context));
-            Guard.EnsureArgumentNotNull(effectLoaderFunc, nameof(effectLoaderFunc));
+            Guard.ArgumentNotNull(context, nameof(context));
+            Guard.ArgumentNotNull(effectLoaderFunc, nameof(effectLoaderFunc));
 
             DrawingContext = context;
             BrushProperties = brushProperties;

@@ -27,7 +27,7 @@ namespace MonoGame.Extended.Drawing.Effects {
         }
 
         private static byte[] Load([NotNull] string effectResourceName) {
-            Guard.EnsureArgumentNotNullOrEmpty(effectResourceName, nameof(effectResourceName));
+            Guard.NotNullOrEmpty(effectResourceName, nameof(effectResourceName));
 
             var assembly = Assembly.GetAssembly(typeof(EffectResource));
 

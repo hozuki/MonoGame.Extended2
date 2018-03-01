@@ -70,7 +70,7 @@ namespace MonoGame.Extended.Drawing {
         }
 
         public void FillMesh([NotNull] Brush brush, [NotNull] Mesh mesh) {
-            Guard.EnsureArgumentNotNull(brush, nameof(brush));
+            Guard.ArgumentNotNull(brush, nameof(brush));
 
             if (mesh.Triangles == null) {
                 return;

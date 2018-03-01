@@ -24,7 +24,7 @@ namespace MonoGame.Extended.Drawing.Geometries {
                 return;
             }
 
-            Guard.EnsureArgumentNotNull(font, nameof(font));
+            Guard.ArgumentNotNull(font, nameof(font));
 
             var fontFace = font.FontFace;
             const int noError = 0;

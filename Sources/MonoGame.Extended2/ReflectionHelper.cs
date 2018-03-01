@@ -7,8 +7,8 @@ namespace MonoGame.Extended {
     public static class ReflectionHelper {
 
         public static byte[] LoadResource([NotNull] Assembly assembly, [NotNull] string resourceName) {
-            Guard.EnsureArgumentNotNull(assembly, nameof(assembly));
-            Guard.EnsureArgumentNotNullOrEmpty(resourceName, nameof(resourceName));
+            Guard.ArgumentNotNull(assembly, nameof(assembly));
+            Guard.NotNullOrEmpty(resourceName, nameof(resourceName));
 
             byte[] data;
 

@@ -18,6 +18,9 @@ namespace MonoGame.Extended.Overlay {
             var f = SKTypeface.FromTypeface(baseFont.Typeface, (SKTypefaceStyle)style);
             var font = new Font(this, f);
 
+            font.Size = baseFont.Size;
+            font.FakeBold = baseFont.FakeBold;
+
             _loadedFonts.Add(font);
 
             return font;

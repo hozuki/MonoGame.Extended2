@@ -270,7 +270,7 @@ namespace MonoGame.Extended.Overlay {
         private static void SetSKPaintFontProperties([NotNull] SKPaint paint, [NotNull] Font font, [CanBeNull] StringFormat stringFormat) {
             paint.Typeface = font.Typeface;
             paint.TextSize = font.Size;
-            paint.FakeBoldText = font.IsBold;
+            paint.FakeBoldText = font.FakeBold;
 
             paint.SubpixelText = true;
 

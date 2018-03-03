@@ -26,7 +26,7 @@ namespace Demo.Overlay {
             _fontManager = new FontManager();
 
             var font = _fontManager.LoadFont("Content/Fonts/NotoSansCJKsc-Regular.otf");
-            font.IsBold = true;
+            font.FakeBold = true;
             font.Size = 50;
 
             var whiteBrush = new SolidBrush(Color.White);

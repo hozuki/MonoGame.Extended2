@@ -56,6 +56,7 @@
   <ItemGroup>
     <Compile Include="Brush.cs" />
     <Compile Include="ColorBlend.cs" />
+    <Compile Include="Extensions\FontExtensions.cs" />
     <Compile Include="Extensions\SkiaSharpExtensions.cs" />
     <Compile Include="Extensions\XnaExtensions.cs" />
     <Compile Include="Font.cs" />

@@ -10,7 +10,9 @@ namespace MonoGame.Extended.Overlay {
             _typeface = typeface;
         }
 
-        public bool IsBold { get; set; }
+        public FontManager FontManager => _manager;
+
+        public bool FakeBold { get; set; }
 
         public float Size {
             get => _size;

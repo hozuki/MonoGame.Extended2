@@ -10,8 +10,32 @@ using SkiaSharp;
 namespace MonoGame.Extended.Overlay {
     public sealed class Graphics : DisposableBase {
 
+        /// <summary>
+        /// Creates a flexible-sized <see cref="Graphics"/>. Its size is always the underlying <see cref="GraphicsDevice"/>'s size.
+        /// </summary>
+        /// <param name="graphicsDevice"></param>
         public Graphics([NotNull] GraphicsDevice graphicsDevice) {
             _graphicsDevice = graphicsDevice;
+            _bounds = graphicsDevice.Viewport.Bounds;
+
+            RecreateResources();
+
+            graphicsDevice.DeviceReset += GraphicsDevice_DeviceReset;
+        }
+
+        /// <summary>
+        /// Creates a fixed-sized <see cref="Graphics"/>.
+        /// </summary>
+        /// <param name="graphicsDevice"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public Graphics([NotNull] GraphicsDevice graphicsDevice, int width, int height) {
+            Guard.GreaterThan(width, 0, nameof(width));
+            Guard.GreaterThan(height, 0, nameof(height));
+
+            _graphicsDevice = graphicsDevice;
+            _bounds = new Rectangle(0, 0, width, height);
+            _isCustomSize = true;
 
             RecreateResources();
 
@@ -19,6 +43,8 @@ namespace MonoGame.Extended.Overlay {
         }
 
         public event EventHandler<EventArgs> ContentChanged;
+
+        public Rectangle Bounds => _bounds;
 
         public Texture2D BackBuffer => _backBuffer;
 
@@ -216,18 +242,24 @@ namespace MonoGame.Extended.Overlay {
         }
 
         private void RecreateResources() {
+            _canvas?.Dispose();
             _canvas = null;
             _surface?.Dispose();
             _surface = null;
             _backBuffer?.Dispose();
 
-            var viewport = _graphicsDevice.Viewport;
+            if (!_isCustomSize) {
+                var viewport = _graphicsDevice.Viewport;
+                _bounds = viewport.Bounds;
+            }
 
-            _surface = SKSurface.Create(viewport.Width, viewport.Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+            var bounds = _bounds;
+
+            _surface = SKSurface.Create(bounds.Width, bounds.Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
             _canvas = _surface?.Canvas;
 
-            _backBuffer = new Texture2D(_graphicsDevice, viewport.Width, viewport.Height, false, SurfaceFormat.Color);
-            _backBufferData = new byte[viewport.Width * viewport.Height * sizeof(int)];
+            _backBuffer = new Texture2D(_graphicsDevice, bounds.Width, bounds.Height, false, SurfaceFormat.Color);
+            _backBufferData = new byte[bounds.Width * bounds.Height * sizeof(int)];
         }
 
         // ReSharper disable once InconsistentNaming
@@ -265,6 +297,9 @@ namespace MonoGame.Extended.Overlay {
         private SKSurface _surface;
         [CanBeNull]
         private SKCanvas _canvas;
+
+        private bool _isCustomSize;
+        private Rectangle _bounds;
 
         private bool _isDirty;
 

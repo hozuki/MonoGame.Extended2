@@ -55,12 +55,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Brush.cs" />
+    <Compile Include="ColorBlend.cs" />
     <Compile Include="Extensions\SkiaSharpExtensions.cs" />
     <Compile Include="Extensions\XnaExtensions.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="FontManager.cs" />
     <Compile Include="FontWeight.cs" />
     <Compile Include="IPaintProvider.cs" />
+    <Compile Include="LinearGradientBrush.cs" />
     <Compile Include="LineCap.cs" />
     <Compile Include="LineJoin.cs" />
     <Compile Include="Graphics.cs" />
@@ -70,6 +72,7 @@
     <Compile Include="SolidBrush.cs" />
     <Compile Include="StringFormat.cs" />
     <Compile Include="TextAlign.cs" />
+    <Compile Include="TileMode.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

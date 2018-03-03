@@ -233,6 +233,10 @@ namespace MonoGame.Extended.Overlay {
         }
 
         private void DrawOrFillString([NotNull] IPaintProvider provider, [NotNull] Font font, [CanBeNull] string str, float x, float y, [CanBeNull] StringFormat stringFormat) {
+            if (string.IsNullOrWhiteSpace(str)) {
+                return;
+            }
+
             using (var paint = provider.Paint.Clone()) {
                 SetSKPaintFontProperties(paint, font, stringFormat);
                 _canvas?.DrawText(str, x, y, paint);

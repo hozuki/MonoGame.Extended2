@@ -71,7 +71,9 @@ namespace MonoGame.Extended.Overlay {
         internal SKPaint Paint { get; }
 
         protected override void Dispose(bool disposing) {
-            Paint.Dispose();
+            if (disposing) {
+                Paint.Dispose();
+            }
         }
 
         SKPaint IPaintProvider.Paint => Paint;

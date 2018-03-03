@@ -44,6 +44,16 @@ namespace Demo.Overlay {
             _graphics.FillRectangle(translucentGreenBrush, rect);
             _graphics.DrawRectangle(redPen, rect);
 
+            var lgp1 = new Vector2(0, 0);
+            var lgp2 = new Vector2(50, 50);
+            var lgb1 = new LinearGradientBrush(lgp1, lgp2, Color.Red, Color.Blue);
+
+            _graphics.FillRectangle(lgb1, 0, 0, 60, 60);
+
+            lgb1.LinearColors = new[] { lgb1.LinearColors[0], Color.Green };
+
+            _graphics.FillRectangle(lgb1, 0, 50, 30, 30);
+
             IsMouseVisible = true;
 
             base.Initialize();

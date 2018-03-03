@@ -25,6 +25,22 @@ namespace MonoGame.Extended.Overlay {
             RecreatePaint();
         }
 
+        public LinearGradientBrush(Point startPoint, Point endPoint, [NotNull] Color[] linearColors)
+            : this(startPoint.ToVector2(), endPoint.ToVector2(), linearColors) {
+        }
+
+        public LinearGradientBrush(Vector2 startPoint, Vector2 endPoint, [NotNull] Color[] linearColors) {
+            Guard.ArgumentNotNull(linearColors, nameof(linearColors));
+
+            _startPoint = startPoint;
+            _endPoint = endPoint;
+
+            _interpolationColors = CreateColorBlend(linearColors);
+            _arePropertiesDirty = true;
+
+            RecreatePaint();
+        }
+
         [NotNull]
         public ColorBlend InterpolationColors {
             get => _interpolationColors;
@@ -178,11 +194,29 @@ namespace MonoGame.Extended.Overlay {
         private static ColorBlend CreateColorBlend([NotNull] Color[] linearColors) {
             Guard.NotNull(linearColors, nameof(linearColors));
 
-            if (linearColors.Length != 2) {
-                throw new ArgumentException("The color array must contain 2 colors.");
+            var colorCount = linearColors.Length;
+
+            if (colorCount < 2) {
+                throw new ArgumentException("The color array must contain at least 2 colors.");
             }
 
-            return CreateColorBlend(linearColors[0], linearColors[1]);
+            if (colorCount == 2) {
+                return CreateColorBlend(linearColors[0], linearColors[1]);
+            }
+
+            var colorBlend = new ColorBlend(colorCount);
+
+            colorBlend.Colors = linearColors;
+
+            var positions = new float[colorCount];
+
+            for (var i = 0; i < colorCount; ++i) {
+                positions[i] = (float)i / (colorCount - 1);
+            }
+
+            colorBlend.Positions = positions;
+
+            return colorBlend;
         }
 
         [NotNull]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
@@ -26,7 +26,10 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
 
             var clientSize = control.ClientSize;
 
-            _chain = new SwapChainRenderTarget(control.GraphicsDevice, control.Handle, clientSize.Width, clientSize.Height);
+            var width = Math.Max(clientSize.Width, 1);
+            var height = Math.Max(clientSize.Height, 1);
+
+            _chain = new SwapChainRenderTarget(control.GraphicsDevice, control.Handle, width, height);
         }
 
         public void PrepareDraw(GraphicsDeviceControl control, PresentationParameters presentationParameters) {

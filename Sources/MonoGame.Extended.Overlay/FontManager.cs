@@ -36,7 +36,7 @@ namespace MonoGame.Extended.Overlay {
         }
 
         [NotNull]
-        public Font CreateFont([NotNull] string familyName, int weight, int width, FontSlant slant = FontSlant.Normal) {
+        public Font CreateFont([NotNull] string familyName, int weight, int width = (int)FontWidth.Normal, FontSlant slant = FontSlant.Normal) {
             Guard.NotNullOrEmpty(familyName, nameof(familyName));
 
             var typeface = SKTypeface.FromFamilyName(familyName, weight, width, (SKFontStyleSlant)slant);

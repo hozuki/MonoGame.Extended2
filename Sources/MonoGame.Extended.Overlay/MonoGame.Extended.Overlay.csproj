@@ -61,8 +61,10 @@
     <Compile Include="Extensions\XnaExtensions.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="FontManager.cs" />
+    <Compile Include="FontSlant.cs" />
     <Compile Include="FontStyle.cs" />
     <Compile Include="FontWeight.cs" />
+    <Compile Include="FontWidth.cs" />
     <Compile Include="IPaintProvider.cs" />
     <Compile Include="LinearGradientBrush.cs" />
     <Compile Include="LineCap.cs" />

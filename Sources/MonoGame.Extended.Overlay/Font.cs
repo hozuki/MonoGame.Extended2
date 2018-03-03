@@ -28,7 +28,7 @@ namespace MonoGame.Extended.Overlay {
         public string FamilyName => _typeface.FamilyName;
 
         public Font Clone() {
-            return _manager.CreateVariance(this, (FontStyle)Typeface.Style);
+            return _manager.CreateFontVariance(this, (FontStyle)Typeface.Style);
         }
 
         internal SKTypeface Typeface => _typeface;

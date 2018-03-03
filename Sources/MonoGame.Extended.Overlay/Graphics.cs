@@ -125,6 +125,14 @@ namespace MonoGame.Extended.Overlay {
             FillEllipse(brush, rect.X, rect.Y, rect.Width, rect.Height);
         }
 
+        public void DrawEllipse([NotNull] Pen pen, [NotNull] Vector2[] points) {
+            DrawOrFillPolygon(pen, points);
+        }
+
+        public void FillEllipse([NotNull] Brush brush, [NotNull] Vector2[] points) {
+            DrawOrFillPolygon(brush, points);
+        }
+
         public void DrawString([NotNull] Pen pen, [NotNull] Font font, [CanBeNull] string str, Vector2 position, [CanBeNull] StringFormat stringFormat = null) {
             DrawString(pen, font, str, position.X, position.Y, stringFormat);
         }
@@ -229,6 +237,27 @@ namespace MonoGame.Extended.Overlay {
 
         private void DrawOrFillEllipse([NotNull] IPaintProvider provider, float x, float y, float width, float height) {
             _canvas?.DrawOval(new SKRect(x, y, x + width, y + height), provider.Paint);
+            SetDirty();
+        }
+
+        private void DrawOrFillPolygon([NotNull] IPaintProvider provider, [NotNull] Vector2[] points) {
+            Guard.ArgumentNotNull(points, nameof(points));
+
+            if (points.Length < 3) {
+                throw new ArgumentException("A polygon should contain at least 3 points.", nameof(points));
+            }
+
+            if (_canvas == null) {
+                return;
+            }
+
+            using (var path = new SKPath()) {
+                var skPoints = Array.ConvertAll(points, XnaExtensions.ToSKPoint);
+
+                path.AddPoly(skPoints);
+                _canvas.DrawPath(path, provider.Paint);
+            }
+
             SetDirty();
         }
 

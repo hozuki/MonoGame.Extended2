@@ -9,5 +9,10 @@ namespace MonoGame.Extended.Overlay.Extensions {
             return new SKColor(color.R, color.G, color.B, color.A);
         }
 
+        // ReSharper disable once InconsistentNaming
+        internal static SKPoint ToSKPoint(this Vector2 point) {
+            return new SKPoint(point.X, point.Y);
+        }
+
     }
 }

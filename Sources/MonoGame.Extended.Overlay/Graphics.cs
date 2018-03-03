@@ -125,11 +125,11 @@ namespace MonoGame.Extended.Overlay {
             FillEllipse(brush, rect.X, rect.Y, rect.Width, rect.Height);
         }
 
-        public void DrawEllipse([NotNull] Pen pen, [NotNull] Vector2[] points) {
+        public void DrawPolygon([NotNull] Pen pen, [NotNull] Vector2[] points) {
             DrawOrFillPolygon(pen, points);
         }
 
-        public void FillEllipse([NotNull] Brush brush, [NotNull] Vector2[] points) {
+        public void FillPolygon([NotNull] Brush brush, [NotNull] Vector2[] points) {
             DrawOrFillPolygon(brush, points);
         }
 

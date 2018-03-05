@@ -46,6 +46,7 @@ namespace MonoGame.Extended.Overlay {
 
         public Rectangle Bounds => _bounds;
 
+        [NotNull]
         public Texture2D BackBuffer => _backBuffer;
 
         public bool UpdateBackBuffer() {
@@ -331,7 +332,7 @@ namespace MonoGame.Extended.Overlay {
         [CanBeNull]
         private SKCanvas _canvas;
 
-        private bool _isCustomSize;
+        private readonly bool _isCustomSize;
         private Rectangle _bounds;
 
         private bool _isDirty;

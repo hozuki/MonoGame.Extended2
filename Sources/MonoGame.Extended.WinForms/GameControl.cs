@@ -120,6 +120,7 @@ namespace MonoGame.Extended.WinForms {
             GameLoop();
         }
 
+        // TODO: This method always returns null when the control is used in WPF interop.
         [CanBeNull]
         private Form FindParentForm() {
             var parent = Parent;

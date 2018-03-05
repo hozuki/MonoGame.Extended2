@@ -23,13 +23,22 @@ namespace MonoGame.Extended.WinForms {
             SetStyle(ControlStyles.DoubleBuffer, false);
         }
 
+        /// <summary>
+        /// Gets the graphics device. The getter must not be called before control initialization.
+        /// </summary>
         [Browsable(false)]
+        [NotNull]
         public GraphicsDevice GraphicsDevice => _graphicsDeviceService.GraphicsDevice;
 
+        /// <summary>
+        /// Gets the graphics device service. The getter must not be called before control initialization.
+        /// </summary>
         [Browsable(false)]
+        [NotNull]
         public GraphicsDeviceWrapper GraphicsDeviceService => _graphicsDeviceService;
 
         [Browsable(false)]
+        [NotNull]
         public ServiceContainer ServiceContainer => _serviceContainer;
 
         public event EventHandler<EventArgs> ControlInitialized;

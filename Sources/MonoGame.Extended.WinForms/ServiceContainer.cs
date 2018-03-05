@@ -11,6 +11,7 @@ namespace MonoGame.Extended.WinForms {
             _registry = new Dictionary<Type, object>();
         }
 
+        [NotNull]
         public static ServiceContainer Default { get; } = new ServiceContainer();
 
         public void AddService([NotNull] Type serviceType, [NotNull] object service) {
@@ -97,10 +98,11 @@ namespace MonoGame.Extended.WinForms {
 
         public event EventHandler<ServiceEventArgs> RegistryUpdated;
 
-        protected virtual void OnServiceSet(ServiceEventArgs e) {
+        protected virtual void OnServiceSet([NotNull] ServiceEventArgs e) {
             RegistryUpdated?.Invoke(this, e);
         }
 
+        [NotNull]
         private readonly object _lock;
         private readonly Dictionary<Type, object> _registry;
 

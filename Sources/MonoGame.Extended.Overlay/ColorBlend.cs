@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
 namespace MonoGame.Extended.Overlay {
@@ -15,6 +16,7 @@ namespace MonoGame.Extended.Overlay {
             _positions = new float[count];
         }
 
+        [NotNull]
         public Color[] Colors {
             get => _colors;
             set {
@@ -28,6 +30,7 @@ namespace MonoGame.Extended.Overlay {
             }
         }
 
+        [NotNull]
         public float[] Positions {
             get => _positions;
             set {
@@ -45,7 +48,9 @@ namespace MonoGame.Extended.Overlay {
             }
         }
 
+        [NotNull]
         private Color[] _colors;
+        [NotNull]
         private float[] _positions;
 
     }

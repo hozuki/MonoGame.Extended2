@@ -6,13 +6,13 @@ using JetBrains.Annotations;
 namespace MonoGame.Extended {
     public static class ReflectionHelper {
 
+        [NotNull]
         public static byte[] LoadResource([NotNull] Assembly assembly, [NotNull] string resourceName) {
             Guard.ArgumentNotNull(assembly, nameof(assembly));
             Guard.NotNullOrEmpty(resourceName, nameof(resourceName));
 
             byte[] data;
 
-            var names = assembly.GetManifestResourceNames();
             using (var resourceStream = assembly.GetManifestResourceStream(resourceName)) {
                 Debug.Assert(resourceStream != null, nameof(resourceStream) + " != null");
 

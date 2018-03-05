@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoGame.Extended.WinForms {
@@ -8,6 +9,7 @@ namespace MonoGame.Extended.WinForms {
         private GraphicsDeviceWrapper() {
         }
 
+        [NotNull]
         public GraphicsDevice GraphicsDevice => _device;
 
         public void ResetDevice(int width, int height) {
@@ -20,6 +22,7 @@ namespace MonoGame.Extended.WinForms {
         public event EventHandler<EventArgs> DeviceReset;
         public event EventHandler<EventArgs> DeviceResetting;
 
+        [NotNull]
         internal static GraphicsDeviceWrapper AddRef(IntPtr hWnd, int width, int height, GraphicsProfile profile) {
             if (Interlocked.Increment(ref _refCount) == 1) {
                 Instance.CreateDevice(hWnd, width, height, profile);
@@ -60,6 +63,7 @@ namespace MonoGame.Extended.WinForms {
             DeviceCreated?.Invoke(this, EventArgs.Empty);
         }
 
+        [NotNull]
         private static readonly GraphicsDeviceWrapper Instance = new GraphicsDeviceWrapper();
         private static int _refCount;
 

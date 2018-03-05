@@ -10,6 +10,7 @@ namespace MonoGame.Extended.Overlay {
             _typeface = typeface;
         }
 
+        [NotNull]
         public FontManager FontManager => _manager;
 
         public bool FakeBold { get; set; }
@@ -25,12 +26,15 @@ namespace MonoGame.Extended.Overlay {
             }
         }
 
+        [NotNull]
         public string FamilyName => _typeface.FamilyName;
 
+        [NotNull]
         public Font Clone() {
             return _manager.CreateFontVariance(this, (FontStyle)Typeface.Style);
         }
 
+        [NotNull]
         internal SKTypeface Typeface => _typeface;
 
         protected override void Dispose(bool disposing) {
@@ -38,7 +42,9 @@ namespace MonoGame.Extended.Overlay {
         }
 
         private float _size = 15;
+        [NotNull]
         private readonly SKTypeface _typeface;
+        [NotNull]
         private readonly FontManager _manager;
 
         object ICloneable.Clone() {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
@@ -78,6 +78,16 @@ namespace MonoGame.Extended.Overlay {
             }
 
             return successful;
+        }
+
+        public void Resize(int width, int height) {
+            Guard.GreaterThan(width, 0, nameof(width));
+            Guard.GreaterThan(height, 0, nameof(height));
+
+            _isCustomSize = true;
+            _bounds = new Rectangle(0, 0, width, height);
+
+            RecreateResources();
         }
 
         public void Clear(Color color) {
@@ -366,7 +376,7 @@ namespace MonoGame.Extended.Overlay {
         [CanBeNull]
         private SKCanvas _canvas;
 
-        private readonly bool _isCustomSize;
+        private bool _isCustomSize;
         private Rectangle _bounds;
 
         private bool _isDirty;

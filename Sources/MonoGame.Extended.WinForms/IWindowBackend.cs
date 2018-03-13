@@ -13,7 +13,7 @@ namespace MonoGame.Extended.WinForms {
 
         void EndDraw([NotNull] GraphicsDeviceControl control);
 
-        void WindowSizeChanged([NotNull] GraphicsDeviceControl control);
+        void OnWindowSizeChanged([NotNull] GraphicsDeviceControl control);
 
     }
 }

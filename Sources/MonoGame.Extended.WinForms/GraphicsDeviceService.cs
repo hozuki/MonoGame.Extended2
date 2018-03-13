@@ -1,12 +1,13 @@
 using System;
-using System.Threading;
+using System.Windows.Forms;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoGame.Extended.WinForms {
-    public sealed class GraphicsDeviceWrapper : IGraphicsDeviceService {
+    public sealed class GraphicsDeviceService : DisposableBase, IGraphicsDeviceService {
 
-        private GraphicsDeviceWrapper() {
+        public GraphicsDeviceService([NotNull] IWin32Window window, GraphicsProfile profile) {
+            CreateDevice(window.Handle, 1, 1, profile);
         }
 
         [NotNull]
@@ -22,30 +23,11 @@ namespace MonoGame.Extended.WinForms {
         public event EventHandler<EventArgs> DeviceReset;
         public event EventHandler<EventArgs> DeviceResetting;
 
-        [NotNull]
-        internal static GraphicsDeviceWrapper AddRef(IntPtr hWnd, int width, int height, GraphicsProfile profile) {
-            if (Interlocked.Increment(ref _refCount) == 1) {
-                Instance.CreateDevice(hWnd, width, height, profile);
-            }
-
-            return Instance;
-        }
-
-        internal void Release() {
-            Release(true);
-        }
-
-        internal void Release(bool disposing) {
-            if (Interlocked.Decrement(ref _refCount) != 0) {
-                return;
-            }
-
+        protected override void Dispose(bool disposing) {
             if (disposing) {
                 DeviceDisposing?.Invoke(this, EventArgs.Empty);
                 _device.Dispose();
             }
-
-            _device = null;
         }
 
         private void CreateDevice(IntPtr hWnd, int width, int height, GraphicsProfile profile) {
@@ -62,10 +44,6 @@ namespace MonoGame.Extended.WinForms {
 
             DeviceCreated?.Invoke(this, EventArgs.Empty);
         }
-
-        [NotNull]
-        private static readonly GraphicsDeviceWrapper Instance = new GraphicsDeviceWrapper();
-        private static int _refCount;
 
         private GraphicsDevice _device;
 

@@ -54,7 +54,7 @@
     <Compile Include="GraphicsDeviceControl.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="GraphicsDeviceWrapper.cs" />
+    <Compile Include="GraphicsDeviceService.cs" />
     <Compile Include="Interop\NativeConstants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GameControl.cs">

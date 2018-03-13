@@ -45,7 +45,9 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
                 return;
             }
 
-            control.GraphicsDevice.SetRenderTarget(_chain);
+            var graphicsDevice = control.GraphicsDevice;
+
+            graphicsDevice?.SetRenderTarget(_chain);
         }
 
         public void EndDraw(GraphicsDeviceControl control) {
@@ -69,26 +71,29 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
             }
         }
 
-        public void WindowSizeChanged(GraphicsDeviceControl control) {
-            if (_chain == null) {
-                return;
-            }
-
+        public void OnWindowSizeChanged(GraphicsDeviceControl control) {
             var clientSize = control.ClientSize;
 
             if (clientSize.Width <= 0 || clientSize.Height <= 0) {
                 return;
             }
 
+            _chain?.Dispose();
+
             var graphicsDevice = control.GraphicsDevice;
 
-            _chain.Dispose();
-            _chain = new SwapChainRenderTarget(graphicsDevice, control.Handle, clientSize.Width, clientSize.Height);
+            if (graphicsDevice != null) {
+                _chain = new SwapChainRenderTarget(graphicsDevice, control.Handle, clientSize.Width, clientSize.Height);
 
-            graphicsDevice.PresentationParameters.BackBufferWidth = clientSize.Width;
-            graphicsDevice.PresentationParameters.BackBufferHeight = clientSize.Height;
+                graphicsDevice.PresentationParameters.BackBufferWidth = clientSize.Width;
+                graphicsDevice.PresentationParameters.BackBufferHeight = clientSize.Height;
 
-            SwapChainUpdated?.Invoke(this, new SwapChainUpdatedEventArgs(_chain));
+                graphicsDevice.Viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0, 1);
+            }
+
+            if (_chain != null) {
+                SwapChainUpdated?.Invoke(this, new SwapChainUpdatedEventArgs(_chain));
+            }
         }
 
         protected override void Dispose(bool disposing) {

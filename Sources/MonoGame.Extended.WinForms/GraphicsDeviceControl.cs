@@ -27,15 +27,15 @@ namespace MonoGame.Extended.WinForms {
         /// Gets the graphics device. The getter must not be called before control initialization.
         /// </summary>
         [Browsable(false)]
-        [NotNull]
-        public GraphicsDevice GraphicsDevice => _graphicsDeviceService.GraphicsDevice;
+        [CanBeNull]
+        public GraphicsDevice GraphicsDevice => _graphicsDeviceService?.GraphicsDevice;
 
         /// <summary>
         /// Gets the graphics device service. The getter must not be called before control initialization.
         /// </summary>
         [Browsable(false)]
-        [NotNull]
-        public GraphicsDeviceWrapper GraphicsDeviceService => _graphicsDeviceService;
+        [CanBeNull]
+        public GraphicsDeviceService GraphicsDeviceService => _graphicsDeviceService;
 
         [Browsable(false)]
         [NotNull]
@@ -131,6 +131,14 @@ namespace MonoGame.Extended.WinForms {
             var beginDrawError = BeginDraw();
 
             if (beginDrawError == DeviceResetError.None) {
+                var graphicsDevice = GraphicsDevice;
+
+                if (graphicsDevice != null) {
+                    var clientSize = ClientSize;
+
+                    graphicsDevice.Viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0, 1);
+                }
+
                 OnDraw();
                 EndDraw();
             } else {
@@ -161,9 +169,7 @@ namespace MonoGame.Extended.WinForms {
                 return;
             }
 
-            var clientSize = ClientSize;
-
-            _graphicsDeviceService = GraphicsDeviceWrapper.AddRef(Handle, clientSize.Width, clientSize.Height, Profile);
+            _graphicsDeviceService = new GraphicsDeviceService(this, Profile);
             _serviceContainer.AddService<IGraphicsDeviceService>(_graphicsDeviceService);
 
             WindowBackend?.Initialize(this);
@@ -190,8 +196,8 @@ namespace MonoGame.Extended.WinForms {
         }
 
         protected override void OnClientSizeChanged(EventArgs e) {
+            WindowBackend?.OnWindowSizeChanged(this);
             base.OnClientSizeChanged(e);
-            WindowBackend?.WindowSizeChanged(this);
         }
 
         protected override void Dispose(bool disposing) {
@@ -203,9 +209,10 @@ namespace MonoGame.Extended.WinForms {
             WindowBackend?.Dispose();
 
             if (!IsDesignMode) {
-                _graphicsDeviceService.Release(disposing);
+                _graphicsDeviceService?.Dispose();
             }
 
+            base.Dispose(disposing);
             base.Dispose(disposing);
         }
 
@@ -224,6 +231,10 @@ namespace MonoGame.Extended.WinForms {
 
             var clientSize = ClientSize;
             var graphicsDevice = GraphicsDevice;
+
+            if (graphicsDevice == null) {
+                return DeviceResetError.Failed;
+            }
 
             WindowBackend?.PrepareDraw(this, graphicsDevice.PresentationParameters);
 
@@ -248,12 +259,18 @@ namespace MonoGame.Extended.WinForms {
         }
 
         private void EndDraw() {
-            WindowBackend?.EndDraw(this);
+            if (GraphicsDevice != null) {
+                WindowBackend?.EndDraw(this);
+            }
         }
 
         private DeviceResetError HandleDeviceReset() {
             bool needsReset;
             var clientSize = ClientSize;
+
+            if (GraphicsDevice == null) {
+                return DeviceResetError.None;
+            }
 
             switch (GraphicsDevice.GraphicsDeviceStatus) {
                 case GraphicsDeviceStatus.Lost:
@@ -268,8 +285,12 @@ namespace MonoGame.Extended.WinForms {
             }
 
             if (needsReset) {
+                if (GraphicsDeviceService == null) {
+                    return DeviceResetError.Failed;
+                }
+
                 try {
-                    _graphicsDeviceService.ResetDevice(clientSize.Width, clientSize.Height);
+                    GraphicsDeviceService.ResetDevice(clientSize.Width, clientSize.Height);
                 } catch (Exception ex) {
                     Debug.Print(ex.ToString());
                     return DeviceResetError.Failed;
@@ -306,7 +327,8 @@ namespace MonoGame.Extended.WinForms {
 
         }
 
-        private GraphicsDeviceWrapper _graphicsDeviceService;
+        [CanBeNull]
+        private GraphicsDeviceService _graphicsDeviceService;
         private readonly ServiceContainer _serviceContainer;
         private readonly List<Microsoft.Xna.Framework.Input.Keys> _keyState;
 

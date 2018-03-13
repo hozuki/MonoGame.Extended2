@@ -77,6 +77,7 @@
     <Compile Include="StringFormat.cs" />
     <Compile Include="TextAlign.cs" />
     <Compile Include="TileMode.cs" />
+    <Compile Include="Triangle.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

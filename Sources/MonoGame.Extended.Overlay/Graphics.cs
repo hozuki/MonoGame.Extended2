@@ -154,6 +154,14 @@ namespace MonoGame.Extended.Overlay {
             return MeasureString(font, str, new Vector2(float.MaxValue, float.MaxValue), stringFormat);
         }
 
+        public void DrawMesh([NotNull] Pen pen, [NotNull] Triangle[] triangles) {
+            DrawOrFillMesh(pen, triangles);
+        }
+
+        public void FillMesh([NotNull] Brush brush, [NotNull] Triangle[] triangles) {
+            DrawOrFillMesh(brush, triangles);
+        }
+
         public Vector2 MeasureString([NotNull] Font font, [CanBeNull] string str, Vector2 maxBounds, [CanBeNull] StringFormat stringFormat = null) {
             var skBounds = new SKRect(0, 0, maxBounds.X, maxBounds.Y);
 
@@ -270,6 +278,32 @@ namespace MonoGame.Extended.Overlay {
             using (var paint = provider.Paint.Clone()) {
                 SetSKPaintFontProperties(paint, font, stringFormat);
                 _canvas?.DrawText(str, x, y, paint);
+            }
+
+            SetDirty();
+        }
+
+        private void DrawOrFillMesh([NotNull] IPaintProvider provider, [NotNull] Triangle[] mesh) {
+            using (var paint = provider.Paint.Clone()) {
+                const SKVertexMode geometryMode = SKVertexMode.Triangles;
+
+                var vertices = new SKPoint[mesh.Length * 3];
+
+                for (var i = 0; i < mesh.Length; ++i) {
+                    var j = i * 3;
+
+                    vertices[j] = mesh[i].Point1.ToSKPoint();
+                    vertices[j + 1] = mesh[i].Point2.ToSKPoint();
+                    vertices[j + 2] = mesh[i].Point3.ToSKPoint();
+                }
+
+                var colors = new SKColor[vertices.Length];
+
+                for (var i = 0; i < colors.Length; ++i) {
+                    colors[i] = SKColors.White;
+                }
+
+                _canvas?.DrawVertices(geometryMode, vertices, colors, paint);
             }
 
             SetDirty();

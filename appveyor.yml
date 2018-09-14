@@ -4,9 +4,8 @@ version: 0.1.0.{build}
 image: Visual Studio 2017
 environment:
   Configuration: Release
-  Platform: x86
+  Platform: Any CPU
 build_script:
-  - cmd: msbuild MonoGame.Extended2.sln /p:Configuration=%CONFIGURATION% /p:Platform="Any CPU"
   - cmd: msbuild MonoGame.Extended2.sln /p:Configuration=%CONFIGURATION% /p:Platform=%PLATFORM%
 before_build:
   - cmd: nuget update -self

@@ -12,6 +12,7 @@ before_build:
   - cmd: nuget update -self
   - cmd: git submodule update --init --recursive
   - ps: scripts\nuget_restore.ps1
+  - ps: .\scripts\install_monogame.ps1
 #artifacts:
 #  - path: 
 #    name: 

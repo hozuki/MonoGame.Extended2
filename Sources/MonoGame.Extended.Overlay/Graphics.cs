@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -164,14 +167,6 @@ namespace MonoGame.Extended.Overlay {
             return MeasureString(font, str, new Vector2(float.MaxValue, float.MaxValue), stringFormat);
         }
 
-        public void DrawMesh([NotNull] Pen pen, [NotNull] Triangle[] triangles) {
-            DrawOrFillMesh(pen, triangles);
-        }
-
-        public void FillMesh([NotNull] Brush brush, [NotNull] Triangle[] triangles) {
-            DrawOrFillMesh(brush, triangles);
-        }
-
         public Vector2 MeasureString([NotNull] Font font, [CanBeNull] string str, Vector2 maxBounds, [CanBeNull] StringFormat stringFormat = null) {
             var skBounds = new SKRect(0, 0, maxBounds.X, maxBounds.Y);
 
@@ -181,6 +176,68 @@ namespace MonoGame.Extended.Overlay {
             }
 
             return new Vector2(skBounds.Width, skBounds.Height);
+        }
+
+        public void DrawMultilineString([NotNull] Pen pen, [NotNull] Font font, [CanBeNull] string str, Vector2 position, [CanBeNull] StringFormat stringFormat = null) {
+            DrawMultilineString(pen, font, str, position, new Vector2(float.MaxValue, float.MaxValue), stringFormat);
+        }
+
+        public void DrawMultilineString([NotNull] Pen pen, [NotNull] Font font, [CanBeNull] string str, Vector2 position, Vector2 maxBounds, [CanBeNull] StringFormat stringFormat = null) {
+            DrawMultilineString(pen, font, str, position.X, position.Y, maxBounds.X, maxBounds.Y, stringFormat);
+        }
+
+        public void DrawMultilineString([NotNull] Pen pen, [NotNull] Font font, [CanBeNull] string str, float x, float y, [CanBeNull] StringFormat stringFormat = null) {
+            DrawOrFillMultilineString(pen, font, str, x, y, float.MaxValue, float.MaxValue, stringFormat);
+        }
+
+        public void DrawMultilineString([NotNull] Pen pen, [NotNull] Font font, [CanBeNull] string str, float x, float y, float maxWidth, float maxHeight, [CanBeNull] StringFormat stringFormat = null) {
+            DrawOrFillMultilineString(pen, font, str, x, y, maxWidth, maxHeight, stringFormat);
+        }
+
+        public void FillMultilineString([NotNull] Brush brush, [NotNull] Font font, [CanBeNull] string str, Vector2 position, [CanBeNull] StringFormat stringFormat = null) {
+            FillMultilineString(brush, font, str, position, new Vector2(float.MaxValue, float.MaxValue), stringFormat);
+        }
+
+        public void FillMultilineString([NotNull] Brush brush, [NotNull] Font font, [CanBeNull] string str, Vector2 position, Vector2 maxBounds, [CanBeNull] StringFormat stringFormat = null) {
+            FillMultilineString(brush, font, str, position.X, position.Y, maxBounds.X, maxBounds.Y, stringFormat);
+        }
+
+        public void FillMultilineString([NotNull] Brush brush, [NotNull] Font font, [CanBeNull] string str, float x, float y, [CanBeNull] StringFormat stringFormat = null) {
+            DrawOrFillMultilineString(brush, font, str, x, y, float.MaxValue, float.MaxValue, stringFormat);
+        }
+
+        public void FillMultilineString([NotNull] Brush brush, [NotNull] Font font, [CanBeNull] string str, float x, float y, float maxWidth, float maxHeight, [CanBeNull] StringFormat stringFormat = null) {
+            DrawOrFillMultilineString(brush, font, str, x, y, maxWidth, maxHeight, stringFormat);
+        }
+
+        public Vector2 MeasureMultilineString([NotNull] Font font, [CanBeNull] string str, [CanBeNull] StringFormat stringFormat = null) {
+            return MeasureMultilineString(font, str, new Vector2(float.MaxValue, float.MaxValue), stringFormat);
+        }
+
+        public Vector2 MeasureMultilineString([NotNull] Font font, [CanBeNull] string str, Vector2 maxBounds, [CanBeNull] StringFormat stringFormat = null) {
+            if (string.IsNullOrEmpty(str)) {
+                return Vector2.Zero;
+            }
+
+            using (var paint = new SKPaint()) {
+                SetSKPaintFontProperties(paint, font, stringFormat);
+
+                var lines = SplitLines(str, paint, maxBounds.X, maxBounds.Y, stringFormat);
+                var lineHeight = DetermineLineHeight(paint, stringFormat);
+
+                var width = lines.Max(line => line.Width);
+                var height = lineHeight * lines.Length;
+
+                return new Vector2(width, height);
+            }
+        }
+
+        public void DrawMesh([NotNull] Pen pen, [NotNull] Triangle[] triangles) {
+            DrawOrFillMesh(pen, triangles);
+        }
+
+        public void FillMesh([NotNull] Brush brush, [NotNull] Triangle[] triangles) {
+            DrawOrFillMesh(brush, triangles);
         }
 
         public void DrawImage([NotNull] Texture2D texture, Vector2 position, bool antialiased = true) {
@@ -293,6 +350,31 @@ namespace MonoGame.Extended.Overlay {
             SetDirty();
         }
 
+        private void DrawOrFillMultilineString([NotNull] IPaintProvider provider, [NotNull] Font font, [CanBeNull] string str, float x, float y, float maxWidth, float maxHeight, [CanBeNull] StringFormat stringFormat) {
+            if (string.IsNullOrWhiteSpace(str)) {
+                return;
+            }
+
+            if (_canvas == null) {
+                return;
+            }
+
+            using (var paint = provider.Paint.Clone()) {
+                SetSKPaintFontProperties(paint, font, stringFormat);
+
+                var lines = SplitLines(str, paint, maxWidth, maxHeight, stringFormat);
+                var lineHeight = DetermineLineHeight(paint, stringFormat);
+
+                foreach (var line in lines) {
+                    _canvas.DrawText(line.Value, x, y, paint);
+
+                    y += lineHeight;
+                }
+            }
+
+            SetDirty();
+        }
+
         private void DrawOrFillMesh([NotNull] IPaintProvider provider, [NotNull] Triangle[] mesh) {
             using (var paint = provider.Paint.Clone()) {
                 const SKVertexMode geometryMode = SKVertexMode.Triangles;
@@ -364,6 +446,78 @@ namespace MonoGame.Extended.Overlay {
             SetDirty();
             ContentChanged?.Invoke(this, EventArgs.Empty);
         }
+
+        [NotNull, ItemNotNull]
+        private static StringLine[] SplitLines([NotNull] string text, [NotNull] SKPaint paint, float maxWidth, float maxHeight, [CanBeNull] StringFormat stringFormat) {
+            // TODO: Some critical layout calculations are not done in this method:
+            // 1. vertical text;
+            // 2. spaces at the end of line
+
+            var lines = text.Split(LfLineSeparator);
+            var lineHeight = DetermineLineHeight(paint, stringFormat);
+
+            var result = new List<StringLine>();
+            var height = lineHeight;
+
+            if (height > maxHeight) {
+                return result.ToArray();
+            }
+
+            foreach (var line in lines) {
+                var lineResult = new StringBuilder();
+                float width = 0;
+
+                foreach (var ch in line) {
+                    var charWidth = paint.MeasureText(ch.ToString());
+
+                    if (width + charWidth >= maxWidth) {
+                        result.Add(new StringLine {
+                            Value = lineResult.ToString(),
+                            Width = width
+                        });
+
+                        height += lineHeight;
+
+                        if (height > maxHeight) {
+                            return result.ToArray();
+                        }
+
+                        lineResult = new StringBuilder();
+                        width = 0;
+                    } else {
+                        lineResult.Append(ch);
+                        width += charWidth;
+                    }
+                }
+
+                if (lineResult.Length > 0) {
+                    result.Add(new StringLine {
+                        Value = lineResult.ToString(),
+                        Width = width
+                    });
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        private static float DetermineLineHeight([NotNull] SKPaint paint, [CanBeNull] StringFormat stringFormat) {
+            float lineHeight;
+
+            if (stringFormat?.PreferredLineHeight != null) {
+                lineHeight = stringFormat.PreferredLineHeight.Value;
+
+                if (lineHeight <= 0) {
+                    lineHeight = 15.0f;
+                }
+            } else {
+                lineHeight = paint.FontSpacing;
+            }
+
+            return lineHeight;
+        }
+
+        private static readonly char[] LfLineSeparator = { '\n' };
 
         private readonly GraphicsDevice _graphicsDevice;
 

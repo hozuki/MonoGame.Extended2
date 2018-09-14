@@ -89,8 +89,10 @@ namespace MonoGame.Extended.Framework.Media {
                                 // 2018-01-30:
                                 // Seems like we should decode and push video data first, rather than video data first.
                                 // The former way produces less lag.
+                                video.DecodeContext.LockFrameQueuesUpdate();
                                 video.DecodeContext.ReadAudioUntilPlaybackIsAfter(_videoPlayer._soundEffectInstance, presentationTime);
                                 video.DecodeContext.ReadVideoUntilPlaybackIsAfter(presentationTime);
+                                video.DecodeContext.UnlockFrameQueueUpdate();
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -98,6 +100,8 @@ namespace MonoGame.Extended.Framework.Media {
 
                         Thread.Sleep(interval);
                     }
+
+                    video.DecodeContext.Reset();
 
                     _exceptionalExit = false;
                 } catch (Exception ex) {

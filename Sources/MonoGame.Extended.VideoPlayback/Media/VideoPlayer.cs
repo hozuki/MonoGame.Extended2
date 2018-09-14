@@ -91,7 +91,8 @@ namespace MonoGame.Extended.Framework.Media {
         }
 
         /// <summary>
-        /// Gets current playback position.
+        /// Gets/sets current playback position.
+        /// Note: the setter is a non-standard extension.
         /// </summary>
         public TimeSpan PlayPosition {
             get {
@@ -103,7 +104,7 @@ namespace MonoGame.Extended.Framework.Media {
                     return TimeSpan.Zero;
                 }
 
-                var elapsed = _stopwatch.Elapsed;
+                var elapsed = _stopwatch.Elapsed + _soughtTime;
 
                 if (elapsed >= video.Duration) {
                     State = MediaState.Stopped;
@@ -111,6 +112,23 @@ namespace MonoGame.Extended.Framework.Media {
                     return video.Duration;
                 } else {
                     return elapsed;
+                }
+            }
+            set {
+                EnsureNotDisposed();
+
+                var video = Video;
+
+                if (video == null) {
+                    return;
+                }
+
+                if (TimeSpan.Zero >= value || value >= video.Duration) {
+                    Stop();
+                } else {
+                    _stopwatch.Restart();
+                    _soughtTime = value;
+                    video.DecodeContext.Seek(value.TotalSeconds);
                 }
             }
         }
@@ -264,6 +282,8 @@ namespace MonoGame.Extended.Framework.Media {
         public void Play([CanBeNull] Video video) {
             EnsureNotDisposed();
 
+            _soughtTime = TimeSpan.Zero;
+
             LoadVideo(video);
 
             if (video != null) {
@@ -323,6 +343,8 @@ namespace MonoGame.Extended.Framework.Media {
             _soundEffectInstance?.Stop();
 
             _stopwatch.Reset();
+
+            _soughtTime = TimeSpan.Zero;
 
             Video = null;
         }
@@ -386,6 +408,8 @@ namespace MonoGame.Extended.Framework.Media {
         private bool _isLooped;
         private bool _isMuted;
         private float _originalVolume = 1f;
+
+        private TimeSpan _soughtTime = TimeSpan.Zero;
 
         private DynamicSoundEffectInstance _soundEffectInstance;
         private readonly VideoPlayerOptions _playerOptions;

@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using FFmpeg.AutoGen;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Media;
-using MonoGame.Extended.Framework.Media;
 using VideoPlayer = MonoGame.Extended.Framework.Media.VideoPlayer;
 
 namespace MonoGame.Extended.VideoPlayback {
@@ -120,6 +119,47 @@ namespace MonoGame.Extended.VideoPlayback {
             // Well, that may be not necessary unless there is another breaking change of this in FFmpeg.
             var timeBase = stream->time_base;
             var result = (double)pts * timeBase.num / timeBase.den;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts given time in seconds to stream timestamp, based on given <see cref="AVStream"/>'s time base.
+        /// </summary>
+        /// <param name="stream">The <see cref="AVStream"/> whose time base is going to be the calculation standard.</param>
+        /// <param name="seconds">Time, in seconds.</param>
+        /// <returns></returns>
+        internal static long ConvertSecondsToPts([CanBeNull] AVStream* stream, double seconds) {
+            if (stream == null) {
+                return 0;
+            }
+
+            var timeBase = stream->time_base;
+            var result = (long)Math.Round(seconds * timeBase.den / timeBase.num);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts given time in seconds to stream timestamp, based on FFmpeg's default time base (<see cref="ffmpeg.AV_TIME_BASE"/>).
+        /// </summary>
+        /// <param name="seconds">Time, in seconds.</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static long ConvertSecondsToPts(double seconds) {
+            return ConvertSecondsToPts(seconds, 0);
+        }
+
+        /// <summary>
+        /// Converts given time in seconds to stream timestamp, based on FFmpeg's default time base (<see cref="ffmpeg.AV_TIME_BASE"/>), with an extra PTS offset.
+        /// </summary>
+        /// <param name="seconds">Time, in seconds.</param>
+        /// <param name="startPts">Extra starting PTS. For example, the video starting PTS.</param>
+        /// <returns></returns>
+        internal static long ConvertSecondsToPts(double seconds, long startPts) {
+            var result = (long)Math.Round(seconds * ffmpeg.AV_TIME_BASE);
+
+            result += startPts;
 
             return result;
         }

@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using FFmpeg.AutoGen;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Media;
-using MonoGame.Extended.Framework.Media;
 using MonoGame.Extended.VideoPlayback.AudioDecoding;
 using MonoGame.Extended.VideoPlayback.Extensions;
 using MonoGame.Extended.VideoPlayback.VideoDecoding;
@@ -215,6 +214,8 @@ namespace MonoGame.Extended.VideoPlayback {
         internal void Reset() {
             // This method may be called in Dispose() so no EnsureNotDisposed() call here.
 
+            LockFrameQueuesUpdate();
+
             if (_videoPackets != null) {
                 while (_videoPackets.Count > 0) {
                     var packet = _videoPackets.Dequeue();
@@ -251,6 +252,74 @@ namespace MonoGame.Extended.VideoPlayback {
             _isEndedTriggered = false;
 
             _nextDecodingVideoTime = double.MinValue;
+
+            UnlockFrameQueueUpdate();
+        }
+
+        /// <summary>
+        /// Seek to the specified time. If the time is out of video range, it calls <see cref="Reset"/>.
+        /// </summary>
+        /// <param name="timeInSeconds"></param>
+        internal void Seek(double timeInSeconds) {
+            if (timeInSeconds <= 0 || timeInSeconds >= GetDurationInSeconds()) {
+                Reset();
+
+                return;
+            }
+
+            LockFrameQueuesUpdate();
+
+            if (_videoPackets != null) {
+                while (_videoPackets.Count > 0) {
+                    var packet = _videoPackets.Dequeue();
+
+                    ffmpeg.av_packet_unref(&packet);
+                }
+            }
+
+            if (_audioPackets != null) {
+                while (_audioPackets.Count > 0) {
+                    var packet = _audioPackets.Dequeue();
+
+                    ffmpeg.av_packet_unref(&packet);
+                }
+            }
+
+            var seekFlags = 0 & ffmpeg.AVSEEK_FLAG_ANY;
+
+            if (_nextDecodingVideoTime > timeInSeconds) {
+                seekFlags |= ffmpeg.AVSEEK_FLAG_BACKWARD;
+            }
+
+            if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0) {
+                var timestamp = FFmpegHelper.ConvertSecondsToPts(timeInSeconds);
+                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, timestamp, seekFlags), Dispose);
+            }
+
+            //if (VideoStreamIndex >= 0) {
+            //    var timestamp = FFmpegHelper.ConvertSecondsToPts(_videoStream, timeInSeconds);
+            //    FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, VideoStreamIndex, timestamp, seekFlags), Dispose);
+            //}
+
+            //if (AudioStreamIndex >= 0) {
+            //    var timestamp = FFmpegHelper.ConvertSecondsToPts(_audioStream, timeInSeconds);
+            //    FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, AudioStreamIndex, timestamp, seekFlags), Dispose);
+            //}
+
+            _preparedVideoFrames?.Clear();
+            _videoFramePool?.Reset();
+
+            ffmpeg.av_frame_unref(_audioFrame);
+
+            _currentVideoFrame = null;
+
+            _audioPacketDecodingOngoing = false;
+
+            _isEndedTriggered = false;
+
+            _nextDecodingVideoTime = double.MinValue;
+
+            UnlockFrameQueueUpdate();
         }
 
         /// <summary>
@@ -389,7 +458,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         }
 
                         var pts = audioFrame->pts;
-                        var framePresentationTime = FFmpegHelper.ConvertPtsToSeconds(audioStream, pts);
+                        var framePresentationTime = FFmpegHelper.ConvertPtsToSeconds(audioStream, pts + _audioStartPts);
 
                         if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
                             break;
@@ -424,6 +493,16 @@ namespace MonoGame.Extended.VideoPlayback {
         /// The lock object used to avoid unwanted frame data overwrites.
         /// </summary>
         internal readonly object VideoFrameTransmissionLock = new object();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void LockFrameQueuesUpdate() {
+            Monitor.Enter(_frameQueueUpdateLock);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void UnlockFrameQueueUpdate() {
+            Monitor.Exit(_frameQueueUpdateLock);
+        }
 
         protected override void Dispose(bool disposing) {
             Reset();
@@ -555,7 +634,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         break;
                     }
 
-                    var videoTime = FFmpegHelper.ConvertPtsToSeconds(avStream, packet.pts);
+                    var videoTime = FFmpegHelper.ConvertPtsToSeconds(avStream, packet.pts + _videoStartPts);
 
                     if (videoTime < 0) {
                         break;
@@ -685,7 +764,7 @@ namespace MonoGame.Extended.VideoPlayback {
                     break;
                 }
 
-                var audioTime = FFmpegHelper.ConvertPtsToSeconds(avStream, packet.pts);
+                var audioTime = FFmpegHelper.ConvertPtsToSeconds(avStream, packet.pts + _audioStartPts);
 
                 if (audioTime < 0) {
                     break;
@@ -857,6 +936,9 @@ namespace MonoGame.Extended.VideoPlayback {
 
         private readonly int _videoStreamIndex = -1;
         private readonly int _audioStreamIndex = -1;
+
+        [NotNull]
+        private readonly object _frameQueueUpdateLock = new object();
 
         private readonly DecodingOptions _decodingOptions;
 

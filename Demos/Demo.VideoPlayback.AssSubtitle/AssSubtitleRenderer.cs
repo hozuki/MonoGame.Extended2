@@ -44,7 +44,7 @@ namespace Demo.VideoPlayback.AssSubtitle {
             }
         }
 
-        public override void Render(TimeSpan time, Texture2D texture) {
+        public override void Render(TimeSpan time, RenderTarget2D texture) {
             if (!Enabled) {
                 return;
             }

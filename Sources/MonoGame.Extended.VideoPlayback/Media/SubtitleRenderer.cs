@@ -18,7 +18,7 @@ namespace MonoGame.Extended.Framework.Media {
         public virtual Point Dimensions { get; set; }
 
         /// <inheritdoc/>
-        public abstract void Render(TimeSpan time, Texture2D texture);
+        public abstract void Render(TimeSpan time, RenderTarget2D texture);
 
     }
 }

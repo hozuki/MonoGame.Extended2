@@ -116,7 +116,7 @@ namespace MonoGame.Extended.Framework.Media {
                 } else {
                     _stopwatch.Restart();
                     _soughtTime = value;
-                    video.DecodeContext.Seek(value.TotalSeconds);
+                    video.DecodeContext?.Seek(value.TotalSeconds);
                 }
             }
         }
@@ -191,72 +191,32 @@ namespace MonoGame.Extended.Framework.Media {
         }
 
         /// <summary>
-        /// Gets a <see cref="Texture2D"/> containing data of current video frame. May returns <see langword="null"/>.
+        /// Gets a <see cref="Texture2D"/> containing data of current video frame.
+        /// Do NOT dispose the obtained texture.
         /// </summary>
         /// <returns>Current video frame represented by a <see cref="Texture2D"/>.</returns>
-        [CanBeNull]
+        /// <exception cref="InvalidOperationException">Thrown if no video is loaded.</exception>
+        [NotNull]
         public Texture2D GetTexture() {
             EnsureNotDisposed();
 
             var video = Video;
 
             if (video == null) {
-                return null;
+                throw new InvalidOperationException("A video should be loaded to get texture.");
             }
 
-            var texture = new Texture2D(_graphicsDevice, video.Width, video.Height, false, RequiredSurfaceFormat);
+            var texture = _textureBuffer;
+
+            Debug.Assert(texture != null, nameof(texture) + " != null");
+
             var r = GetTexture(texture);
 
-            if (r) {
-                return texture;
-            } else {
-                texture.Dispose();
-
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// (Non-standard extension) Retrieves the data of current video frame and writes it into specified <see cref="Texture2D"/> buffer.
-        /// The <see cref="Texture2D"/> must use surface format <see cref="SurfaceFormat.Color"/>.
-        /// This method avoids recreating textures every time to achieve a better performance.
-        /// </summary>
-        /// <param name="texture">The texture that receives the data of current video frame.</param>
-        /// <returns><see langword="true"/> if the operation succeeds, otherwise <see langword="false"/>.</returns>
-        public bool GetTexture([NotNull] Texture2D texture) {
-            EnsureNotDisposed();
-
-            if (_decodingThread == null) {
-                return false;
+            if (!r) {
+                Debug.WriteLine("Failed to get texture from video. Returning last texture.");
             }
 
-            if (_decodingThread.ExceptionalExit.HasValue && _decodingThread.ExceptionalExit.Value) {
-                throw new FFmpegException("Decoding thread exited unexpectedly.");
-            }
-
-            var video = Video;
-
-            if (video == null) {
-                return false;
-            }
-
-            var thread = _decodingThread.SystemThread;
-
-            if (thread.IsAlive) {
-                var gotTexture = video.RetrieveCurrentVideoFrame(texture);
-                var now = GetPlayPosition(false);
-                var subtitleRenderer = SubtitleRenderer;
-
-                if (subtitleRenderer != null) {
-                    if (subtitleRenderer.Enabled) {
-                        subtitleRenderer.Render(now, texture);
-                    }
-                }
-
-                return gotTexture;
-            } else {
-                return false;
-            }
+            return texture;
         }
 
         /// <summary>
@@ -349,6 +309,8 @@ namespace MonoGame.Extended.Framework.Media {
                 throw new InvalidOperationException("Cannot replay video when no video is loaded.");
             }
 
+            video.InitializeDecodeContext();
+
             ResetAndPlayVideoFromStart(video);
         }
 
@@ -380,6 +342,9 @@ namespace MonoGame.Extended.Framework.Media {
 
             _soundEffectInstance?.Dispose();
             _soundEffectInstance = null;
+
+            _textureBuffer?.Dispose();
+            _textureBuffer = null;
         }
 
         /// <summary>
@@ -394,12 +359,70 @@ namespace MonoGame.Extended.Framework.Media {
                 Stop();
             }
 
+            _textureBuffer?.Dispose();
+            _textureBuffer = null;
+
             Video = video;
 
             if (video != null) {
                 video.Ended += video_Ended;
 
                 video.InitializeDecodeContext();
+
+                _textureBuffer = new RenderTarget2D(_graphicsDevice, video.Width, video.Height, false,
+                    SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the data of current video frame and writes it into specified <see cref="Texture2D"/> buffer.
+        /// The <see cref="Texture2D"/> must use surface format <see cref="SurfaceFormat.Color"/>.
+        /// This method avoids recreating textures every time to achieve a better performance.
+        /// </summary>
+        /// <param name="texture">The texture that receives the data of current video frame.</param>
+        /// <returns><see langword="true"/> if the operation succeeds, otherwise <see langword="false"/>.</returns>
+        private bool GetTexture([NotNull] RenderTarget2D texture) {
+            EnsureNotDisposed();
+
+            if (_decodingThread == null) {
+                return false;
+            }
+
+            if (_decodingThread.ExceptionalExit.HasValue && _decodingThread.ExceptionalExit.Value) {
+                throw new FFmpegException("Decoding thread exited unexpectedly.");
+            }
+
+            var video = Video;
+
+            if (video == null) {
+                return false;
+            }
+
+            var thread = _decodingThread.SystemThread;
+
+            if (thread.IsAlive) {
+                var gotTexture = video.RetrieveCurrentVideoFrame(texture);
+
+                if (gotTexture) {
+                    var now = GetPlayPosition(false);
+                    var subtitleRenderer = SubtitleRenderer;
+
+                    if (subtitleRenderer != null) {
+                        var targets = _graphicsDevice.GetRenderTargets();
+
+                        _graphicsDevice.SetRenderTarget(_textureBuffer);
+
+                        if (subtitleRenderer.Enabled) {
+                            subtitleRenderer.Render(now, texture);
+                        }
+
+                        _graphicsDevice.SetRenderTargets(targets);
+                    }
+                }
+
+                return gotTexture;
+            } else {
+                return false;
             }
         }
 
@@ -445,7 +468,7 @@ namespace MonoGame.Extended.Framework.Media {
             Trace.Assert(_soundEffectInstance != null, nameof(_soundEffectInstance) + " != null");
 
             // Reset states so that this method also fits restarting playback.
-            video.DecodeContext.Reset();
+            video.DecodeContext?.Reset();
             _soundEffectInstance.Stop();
             _soundEffectInstance.Dispose();
             _soundEffectInstance = new DynamicSoundEffectInstance(FFmpegHelper.RequiredSampleRate, FFmpegHelper.RequiredChannelsXna);
@@ -480,6 +503,9 @@ namespace MonoGame.Extended.Framework.Media {
         private float _originalVolume = 1f;
 
         private TimeSpan _soughtTime = TimeSpan.Zero;
+
+        [CanBeNull]
+        private RenderTarget2D _textureBuffer;
 
         [CanBeNull]
         private DynamicSoundEffectInstance _soundEffectInstance;

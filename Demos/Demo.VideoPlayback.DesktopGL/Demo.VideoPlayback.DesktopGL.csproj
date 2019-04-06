@@ -130,6 +130,10 @@
       <Project>{7c0ccde4-0308-4c1e-a178-07d8efcdfc52}</Project>
       <Name>Demo.VideoPlayback.AssSubtitle</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Demo.VideoPlayback.SrtSubtitle\Demo.VideoPlayback.SrtSubtitle.csproj">
+      <Project>{aa257d29-a569-4baa-9770-ae5f15089e43}</Project>
+      <Name>Demo.VideoPlayback.SrtSubtitle</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MonoGame\v3.0\MonoGame.Content.Builder.targets" />

@@ -1,5 +1,9 @@
-﻿using System;
+﻿//#define TEST_ASS
+//#define TEST_SRT
+
+using System;
 using Demo.VideoPlayback.AssSubtitle;
+using Demo.VideoPlayback.SrtSubtitle;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -56,9 +60,7 @@ namespace Demo.VideoPlayback.DesktopGL {
 
             _helpTexture = TextureLoader.LoadTexture(GraphicsDevice, "Content/HelpTexture.png");
 
-#if true
-            _video = VideoHelper.LoadFromFile("Content/SampleVideo_1280x720_1mb.mp4");
-#else
+#if TEST_ASS
             _video = VideoHelper.LoadFromFile(@"D:\Videos\sm32324383.mp4");
 
             var subtitle = new AssSubtitleRenderer();
@@ -67,6 +69,18 @@ namespace Demo.VideoPlayback.DesktopGL {
             subtitle.Enabled = true;
 
             _videoPlayer.SubtitleRenderer = subtitle;
+#elif TEST_SRT
+            _video = VideoHelper.LoadFromFile(@"D:\TEMP\test_mp4.mp4");
+
+            var subtitle = new SrtSubtitleRenderer(GraphicsDevice);
+
+            subtitle.LoadFromFile(@"D:\TEMP\test_mp4.srt");
+            subtitle.ApplyFontFile(@"C:\Windows\Fonts\arial.ttf");
+            subtitle.Enabled = true;
+
+            _videoPlayer.SubtitleRenderer = subtitle;
+#else
+            _video = VideoHelper.LoadFromFile("Content/SampleVideo_1280x720_1mb.mp4");
 #endif
 
             _videoPlayer.Play(_video);
@@ -111,16 +125,12 @@ namespace Demo.VideoPlayback.DesktopGL {
             // TODO: Add your drawing code here
             var videoTexture = _videoPlayer.GetTexture();
 
-            if (videoTexture != null) {
-                _spriteBatch.Begin();
+            _spriteBatch.Begin();
 
-                var destRect = new Rectangle(0, 0, WindowWidth, WindowHeight);
-                _spriteBatch.Draw(videoTexture, destRect, Color.White);
+            var destRect = new Rectangle(0, 0, WindowWidth, WindowHeight);
+            _spriteBatch.Draw(videoTexture, destRect, Color.White);
 
-                _spriteBatch.End();
-            }
-
-            videoTexture?.Dispose();
+            _spriteBatch.End();
 
             _spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
             _spriteBatch.Draw(_helpTexture, Vector2.Zero, Color.White);

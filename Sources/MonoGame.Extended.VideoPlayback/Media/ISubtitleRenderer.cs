@@ -29,7 +29,7 @@ namespace MonoGame.Extended.Framework.Media {
         /// <param name="time">The time when the corresponding subtitle should be rendered.</param>
         /// <param name="texture">The texture to render to.</param>
         [PublicAPI]
-        void Render(TimeSpan time, [NotNull] Texture2D texture);
+        void Render(TimeSpan time, [NotNull] RenderTarget2D texture);
 
     }
 }

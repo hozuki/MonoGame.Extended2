@@ -100,16 +100,12 @@ namespace Demo.VideoPlayback.WindowsDX {
             // TODO: Add your drawing code here
             var videoTexture = _videoPlayer.GetTexture();
 
-            if (videoTexture != null) {
-                _spriteBatch.Begin();
+            _spriteBatch.Begin();
 
-                var destRect = new Rectangle(0, 0, WindowWidth, WindowHeight);
-                _spriteBatch.Draw(videoTexture, destRect, Color.White);
+            var destRect = new Rectangle(0, 0, WindowWidth, WindowHeight);
+            _spriteBatch.Draw(videoTexture, destRect, Color.White);
 
-                _spriteBatch.End();
-            }
-
-            videoTexture?.Dispose();
+            _spriteBatch.End();
 
             _spriteBatch.Begin(blendState: BlendState.NonPremultiplied);
             _spriteBatch.Draw(_helpTexture, Vector2.Zero, Color.White);

@@ -21,7 +21,7 @@ namespace MonoGame.Extended.Framework.Media {
         /// </summary>
         [Obsolete(@"This constructor requires doing reflection hack on private properties of Game class. The value may subject to changes. Avoid using it if possible.")]
         public VideoPlayer()
-        : this(GameHelper.GetCurrentGame().GraphicsDevice) {
+            : this(GameHelper.GetCurrentGame().GraphicsDevice) {
         }
 
         /// <inheritdoc />
@@ -30,7 +30,7 @@ namespace MonoGame.Extended.Framework.Media {
         /// </summary>
         /// <param name="graphicsDevice">The graphics device to use.</param>
         public VideoPlayer([NotNull] GraphicsDevice graphicsDevice)
-        : this(graphicsDevice, VideoPlayerOptions.Default) {
+            : this(graphicsDevice, VideoPlayerOptions.Default) {
         }
 
         /// <summary>
@@ -82,10 +82,12 @@ namespace MonoGame.Extended.Framework.Media {
 
                 _isMuted = value;
 
-                if (value) {
-                    _soundEffectInstance.Volume = 0;
-                } else {
-                    _soundEffectInstance.Volume = _originalVolume;
+                if (_soundEffectInstance != null) {
+                    if (value) {
+                        _soundEffectInstance.Volume = 0;
+                    } else {
+                        _soundEffectInstance.Volume = _originalVolume;
+                    }
                 }
             }
         }
@@ -98,21 +100,7 @@ namespace MonoGame.Extended.Framework.Media {
             get {
                 EnsureNotDisposed();
 
-                var video = Video;
-
-                if (video == null) {
-                    return TimeSpan.Zero;
-                }
-
-                var elapsed = _stopwatch.Elapsed + _soughtTime;
-
-                if (elapsed >= video.Duration) {
-                    State = MediaState.Stopped;
-
-                    return video.Duration;
-                } else {
-                    return elapsed;
-                }
+                return GetPlayPosition(true);
             }
             set {
                 EnsureNotDisposed();
@@ -186,7 +174,7 @@ namespace MonoGame.Extended.Framework.Media {
             get {
                 EnsureNotDisposed();
 
-                return _soundEffectInstance.Volume;
+                return _soundEffectInstance?.Volume ?? 0;
             }
             set {
                 EnsureNotDisposed();
@@ -195,7 +183,9 @@ namespace MonoGame.Extended.Framework.Media {
                 _originalVolume = value;
 
                 if (!IsMuted) {
-                    _soundEffectInstance.Volume = value;
+                    if (_soundEffectInstance != null) {
+                        _soundEffectInstance.Volume = value;
+                    }
                 }
             }
         }
@@ -236,6 +226,10 @@ namespace MonoGame.Extended.Framework.Media {
         public bool GetTexture([NotNull] Texture2D texture) {
             EnsureNotDisposed();
 
+            if (_decodingThread == null) {
+                return false;
+            }
+
             if (_decodingThread.ExceptionalExit.HasValue && _decodingThread.ExceptionalExit.Value) {
                 throw new FFmpegException("Decoding thread exited unexpectedly.");
             }
@@ -249,7 +243,17 @@ namespace MonoGame.Extended.Framework.Media {
             var thread = _decodingThread.SystemThread;
 
             if (thread.IsAlive) {
-                return video.RetrieveCurrentVideoFrame(texture);
+                var gotTexture = video.RetrieveCurrentVideoFrame(texture);
+                var now = GetPlayPosition(false);
+                var subtitleRenderer = SubtitleRenderer;
+
+                if (subtitleRenderer != null) {
+                    if (subtitleRenderer.Enabled) {
+                        subtitleRenderer.Render(now, texture);
+                    }
+                }
+
+                return gotTexture;
             } else {
                 return false;
             }
@@ -282,26 +286,9 @@ namespace MonoGame.Extended.Framework.Media {
         public void Play([CanBeNull] Video video) {
             EnsureNotDisposed();
 
-            _soughtTime = TimeSpan.Zero;
-
             LoadVideo(video);
 
-            if (video != null) {
-                // Reset states so that this method also fits restarting playback.
-                video.DecodeContext.Reset();
-                _soundEffectInstance.Stop();
-                _soundEffectInstance.Dispose();
-                _soundEffectInstance = new DynamicSoundEffectInstance(FFmpegHelper.RequiredSampleRate, FFmpegHelper.RequiredChannelsXna);
-
-                _decodingThread = new DecodingThread(this, _playerOptions);
-
-                State = MediaState.Playing;
-
-                _stopwatch.Start();
-
-                _decodingThread.Start();
-                _soundEffectInstance.Play();
-            }
+            ResetAndPlayVideoFromStart(video);
         }
 
         /// <summary>
@@ -352,12 +339,34 @@ namespace MonoGame.Extended.Framework.Media {
         /// <summary>
         /// (Non-standard extension) Equivalent for <see cref="Stop"/> then <see cref="Play"/> the same video file.
         /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown when no video is loaded.</exception>
         public void Replay() {
-            // Within Stop() the Video property is set to null, so save its value first.
+            EnsureNotDisposed();
+
             var video = Video;
 
-            Stop();
-            Play(video);
+            if (video == null) {
+                throw new InvalidOperationException("Cannot replay video when no video is loaded.");
+            }
+
+            ResetAndPlayVideoFromStart(video);
+        }
+
+        /// <summary>
+        /// Gets or sets the subtitle renderer.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown when setting subtitle renderer when playback is not stopped.</exception>
+        [CanBeNull]
+        public ISubtitleRenderer SubtitleRenderer {
+            [DebuggerStepThrough]
+            get => _subtitleRenderer;
+            set {
+                if (State != MediaState.Stopped) {
+                    throw new InvalidOperationException("Cannot set subtitle renderer when playback is not stopped.");
+                }
+
+                _subtitleRenderer = value;
+            }
         }
 
         /// <summary>
@@ -398,11 +407,70 @@ namespace MonoGame.Extended.Framework.Media {
             }
         }
 
+        private TimeSpan GetPlayPosition(bool testAndSetState) {
+            var video = Video;
+
+            if (video == null) {
+                return TimeSpan.Zero;
+            }
+
+            var elapsed = _stopwatch.Elapsed + _soughtTime;
+
+            if (elapsed >= video.Duration) {
+                if (testAndSetState) {
+                    State = MediaState.Stopped;
+                }
+
+                return video.Duration;
+            } else {
+                return elapsed;
+            }
+        }
+
+        private void ResetAndPlayVideoFromStart([CanBeNull] Video video) {
+            _soughtTime = TimeSpan.Zero;
+
+            if (video == null) {
+                return;
+            }
+
+            var subtitleRenderer = SubtitleRenderer;
+
+            if (subtitleRenderer != null) {
+                subtitleRenderer.Dimensions = new Point(video.Width, video.Height);
+            }
+
+            Trace.Assert(_soundEffectInstance != null, nameof(_soundEffectInstance) + " != null");
+
+            // Reset states so that this method also fits restarting playback.
+            video.DecodeContext.Reset();
+            _soundEffectInstance.Stop();
+            _soundEffectInstance.Dispose();
+            _soundEffectInstance = new DynamicSoundEffectInstance(FFmpegHelper.RequiredSampleRate, FFmpegHelper.RequiredChannelsXna);
+
+            _decodingThread = new DecodingThread(this, _playerOptions);
+
+            State = MediaState.Playing;
+
+            _stopwatch.Stop();
+            _stopwatch.Reset();
+            _stopwatch.Start();
+
+            _decodingThread.Start();
+            _soundEffectInstance.Play();
+        }
+
         private readonly GraphicsDevice _graphicsDevice;
 
+        [CanBeNull]
         private Video _video;
+
         private MediaState _state = MediaState.Stopped;
+
+        [NotNull]
         private readonly Stopwatch _stopwatch;
+
+        [CanBeNull]
         private DecodingThread _decodingThread;
 
         private bool _isLooped;
@@ -411,8 +479,14 @@ namespace MonoGame.Extended.Framework.Media {
 
         private TimeSpan _soughtTime = TimeSpan.Zero;
 
+        [CanBeNull]
         private DynamicSoundEffectInstance _soundEffectInstance;
+
+        [NotNull]
         private readonly VideoPlayerOptions _playerOptions;
+
+        [CanBeNull]
+        private ISubtitleRenderer _subtitleRenderer;
 
     }
 }

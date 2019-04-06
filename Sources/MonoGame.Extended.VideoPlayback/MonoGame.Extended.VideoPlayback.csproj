@@ -68,6 +68,8 @@
     <Compile Include="FFmpegException.cs" />
     <Compile Include="FFmpegHelper.cs" />
     <Compile Include="GameHelper.cs" />
+    <Compile Include="Media\ISubtitleRenderer.cs" />
+    <Compile Include="Media\SubtitleRenderer.cs" />
     <Compile Include="ObjectPool`1.cs" />
     <Compile Include="PacketQueue.cs" />
     <Compile Include="Media\Video.cs" />

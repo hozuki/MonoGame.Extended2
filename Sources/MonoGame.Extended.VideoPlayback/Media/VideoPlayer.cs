@@ -355,7 +355,7 @@ namespace MonoGame.Extended.Framework.Media {
         /// <summary>
         /// Gets or sets the subtitle renderer.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown when setting subtitle renderer when playback is not stopped.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if setting subtitle renderer when playback is not stopped.</exception>
         [CanBeNull]
         public ISubtitleRenderer SubtitleRenderer {
             [DebuggerStepThrough]

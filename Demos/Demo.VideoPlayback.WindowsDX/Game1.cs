@@ -148,6 +148,15 @@ namespace Demo.VideoPlayback.WindowsDX {
                 }
             } else if (e.KeyCode == Keys.R) {
                 _videoPlayer.Replay();
+            } else {
+                switch (e.KeyCode) {
+                    case Keys.Left:
+                        _videoPlayer.PlayPosition -= TimeSpan.FromSeconds(5);
+                        break;
+                    case Keys.Right:
+                        _videoPlayer.PlayPosition += TimeSpan.FromSeconds(5);
+                        break;
+                }
             }
         }
 

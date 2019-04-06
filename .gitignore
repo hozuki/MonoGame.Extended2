@@ -10,6 +10,5 @@ packages
 
 .history
 
-*.sln.user
-*.csproj.user
+*.user
 *.DotSettings

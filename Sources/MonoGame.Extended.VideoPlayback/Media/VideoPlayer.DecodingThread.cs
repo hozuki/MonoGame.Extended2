@@ -24,11 +24,14 @@ namespace MonoGame.Extended.Framework.Media {
 
                 // We need SynchronizationContext to post messages for us.
                 // And gracefully, SynchronizationContext.Current is thread-local.
-                if (SynchronizationContext.Current == null) {
-                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+                var syncContext = SynchronizationContext.Current;
+
+                if (syncContext == null) {
+                    syncContext = new SynchronizationContext();
+                    SynchronizationContext.SetSynchronizationContext(syncContext);
                 }
 
-                _mainThreadSynchronizationContext = SynchronizationContext.Current;
+                _mainThreadSynchronizationContext = syncContext;
 
                 var thread = new Thread(ThreadProc);
 
@@ -86,13 +89,25 @@ namespace MonoGame.Extended.Framework.Media {
                                 var currentTime = videoPlayer.PlayPosition;
                                 var presentationTime = currentTime.TotalSeconds;
 
-                                // 2018-01-30:
-                                // Seems like we should decode and push video data first, rather than video data first.
-                                // The former way produces less lag.
-                                video.DecodeContext.LockFrameQueuesUpdate();
-                                video.DecodeContext.ReadAudioUntilPlaybackIsAfter(_videoPlayer._soundEffectInstance, presentationTime);
-                                video.DecodeContext.ReadVideoUntilPlaybackIsAfter(presentationTime);
-                                video.DecodeContext.UnlockFrameQueueUpdate();
+                                var decodeContext = video.DecodeContext;
+
+                                if (decodeContext != null) {
+                                    // 2018-01-30:
+                                    // Seems like we should decode and push video data first, rather than video data first.
+                                    // The former way produces less lag.
+                                    decodeContext.LockFrameQueuesUpdate();
+
+                                    var soundEffect = _videoPlayer._soundEffectInstance;
+
+                                    if (soundEffect != null) {
+                                        decodeContext.ReadAudioUntilPlaybackIsAfter(soundEffect, presentationTime);
+                                    }
+
+                                    decodeContext.ReadVideoUntilPlaybackIsAfter(presentationTime);
+
+                                    decodeContext.UnlockFrameQueueUpdate();
+                                }
+
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -101,7 +116,7 @@ namespace MonoGame.Extended.Framework.Media {
                         Thread.Sleep(interval);
                     }
 
-                    video.DecodeContext.Reset();
+                    video.DecodeContext?.Reset();
 
                     _exceptionalExit = false;
                 } catch (Exception ex) {
@@ -119,11 +134,18 @@ namespace MonoGame.Extended.Framework.Media {
                 }
             }
 
+            [CanBeNull]
             private bool? _exceptionalExit;
+
+            [NotNull]
             private readonly SynchronizationContext _mainThreadSynchronizationContext;
+
             private bool _continueWorking = true;
 
+            [NotNull]
             private readonly VideoPlayer _videoPlayer;
+
+            [NotNull]
             private readonly VideoPlayerOptions _playerOptions;
 
         }

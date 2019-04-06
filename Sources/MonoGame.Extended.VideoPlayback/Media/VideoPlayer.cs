@@ -353,7 +353,7 @@ namespace MonoGame.Extended.Framework.Media {
         }
 
         /// <summary>
-        /// Gets or sets the subtitle renderer.
+        /// (Non-standard extension) Gets or sets the subtitle renderer.
         /// </summary>
         /// <exception cref="InvalidOperationException">Thrown if setting subtitle renderer when playback is not stopped.</exception>
         [CanBeNull]
@@ -398,6 +398,8 @@ namespace MonoGame.Extended.Framework.Media {
 
             if (video != null) {
                 video.Ended += video_Ended;
+
+                video.InitializeDecodeContext();
             }
         }
 

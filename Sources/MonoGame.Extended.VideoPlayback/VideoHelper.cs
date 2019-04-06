@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using JetBrains.Annotations;
-using Microsoft.Xna.Framework.Media;
-using Video = MonoGame.Extended.Framework.Media.Video;
+using MonoGame.Extended.Framework.Media;
 
 namespace MonoGame.Extended.VideoPlayback {
 

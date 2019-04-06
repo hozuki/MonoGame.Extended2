@@ -1,8 +1,4 @@
-﻿using System;
-using Microsoft.Xna.Framework.Media;
-using MonoGame.Extended.Framework.Media;
-
-namespace MonoGame.Extended.VideoPlayback {
+﻿namespace MonoGame.Extended.VideoPlayback {
     /// <summary>
     /// Options for <see cref="Framework.Media.VideoPlayer"/>.
     /// </summary>

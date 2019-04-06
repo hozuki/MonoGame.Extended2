@@ -35,111 +35,7 @@ namespace MonoGame.Extended.VideoPlayback {
             // 2. Try to read stream information (codec, duration, etc.).
             FFmpegHelper.Verify(ffmpeg.avformat_find_stream_info(formatContext, null), Dispose);
 
-            // 3. If we are opening an ASF container, we need a different stream start time calculation method.
-            // About start_time and ASF container format (.asf, .wmv), see:
-            // https://www.ffmpeg.org/doxygen/3.0/structAVStream.html#a7c67ae70632c91df8b0f721658ec5377
-            var containerName = FFmpegHelper.PtrToStringNullEnded(formatContext->iformat->name, Encoding.UTF8);
-            var isAsfContainer = containerName == "asf";
-
-            VideoDecodingContext videoContext = null;
-            AudioDecodingContext audioContext = null;
-
-            // 4. Search for video and audio streams.
-            for (var i = 0; i < formatContext->nb_streams; ++i) {
-                var avStream = formatContext->streams[i];
-
-                if (videoContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO) {
-                    // 5. If this is a video stream, create a VideoDecodingContext from it...
-                    videoContext = new VideoDecodingContext(avStream, decodingOptions);
-                    _videoStreamIndex = i;
-
-                    // ... and record its start time.
-                    if (!isAsfContainer) {
-                        if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
-                            _videoStartPts = avStream->start_time;
-                        }
-                    } else {
-                        // I don't know why but this hack works... at least on FFmpeg 3.4.
-                        _videoStartPts = avStream->cur_dts / 2;
-                    }
-                } else if (audioContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {
-                    // 6. If this is an audio stream, create an AudioDecodingContext from it...
-                    audioContext = new AudioDecodingContext(avStream);
-                    _audioStreamIndex = i;
-
-                    // ... and record its start time.
-                    if (!isAsfContainer) {
-                        if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
-                            _audioStartPts = avStream->start_time;
-                        }
-                    } else {
-                        _audioStartPts = 0;
-                    }
-                }
-            }
-
-            // 7. If we got a video stream...
-            if (videoContext != null) {
-                // ... we should get its codec...
-                var codec = ffmpeg.avcodec_find_decoder(videoContext.CodecContext->codec_id);
-
-                if (codec == null) {
-                    throw new FFmpegException("Failed to find video codec.");
-                }
-
-                FFmpegHelper.Verify(ffmpeg.avcodec_open2(videoContext.CodecContext, codec, null), Dispose);
-
-                // ... and initialize the helper data structures.
-                _videoFramePool = new ObjectPool<IntPtr>(decodingOptions.VideoPacketQueueSizeThreshold, AllocFrame, DeallocFrame);
-                _preparedVideoFrames = new SortedList<long, IntPtr>(decodingOptions.VideoPacketQueueSizeThreshold);
-                _videoCodecName = FFmpegHelper.PtrToStringNullEnded(codec->name, Encoding.UTF8);
-
-                IntPtr AllocFrame() {
-                    return (IntPtr)ffmpeg.av_frame_alloc();
-                }
-
-                void DeallocFrame(IntPtr p) {
-                    var frame = (AVFrame*)p;
-
-                    ffmpeg.av_frame_free(&frame);
-                }
-            }
-
-            // 8. If we got an audio stream...
-            if (audioContext != null) {
-                // ...we should get its codec...
-                var codec = ffmpeg.avcodec_find_decoder(audioContext.CodecContext->codec_id);
-
-                if (codec == null) {
-                    throw new FFmpegException("Failed to find audio codec.");
-                }
-
-                FFmpegHelper.Verify(ffmpeg.avcodec_open2(audioContext.CodecContext, codec, null), Dispose);
-
-                // ... and prepare the buffer frame.
-                _audioFrame = ffmpeg.av_frame_alloc();
-                _audioCodecName = FFmpegHelper.PtrToStringNullEnded(codec->name, Encoding.UTF8);
-            }
-
-            // 9. Finally, set up other objects.
-            if (_videoStreamIndex >= 0) {
-                _videoStream = formatContext->streams[_videoStreamIndex];
-            }
-
-            if (_audioStreamIndex >= 0) {
-                _audioStream = formatContext->streams[_audioStreamIndex];
-            }
-
-            if (videoContext != null) {
-                _videoPackets = new PacketQueue(decodingOptions.VideoPacketQueueCapacity);
-            }
-
-            if (audioContext != null) {
-                _audioPackets = new PacketQueue(decodingOptions.AudioPacketQueueCapacity);
-            }
-
-            _videoContext = videoContext;
-            _audioContext = audioContext;
+            // The rest are initialized lazily. See LazyInitialize().
         }
 
         /// <summary>
@@ -158,33 +54,73 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <summary>
         /// The underlying <see cref="AVFormatContext"/>.
         /// </summary>
-        internal AVFormatContext* FormatContext => _formatContext;
+        [CanBeNull]
+        internal AVFormatContext* FormatContext {
+            [DebuggerStepThrough]
+            get {
+                EnsureNotDisposed();
+
+                return _formatContext;
+            }
+        }
 
         /// <summary>
         /// The <see cref="VideoDecodingContext"/> associated with this <see cref="DecodeContext"/>.
         /// May be <see langword="null"/> if there is no video stream.
         /// </summary>
         [CanBeNull]
-        internal VideoDecodingContext VideoContext => _videoContext;
+        internal VideoDecodingContext VideoContext {
+            [DebuggerStepThrough]
+            get {
+                EnsureNotDisposed();
+
+                EnsureInitialized();
+
+                return _videoContext;
+            }
+        }
 
         /// <summary>
         /// The <see cref="AudioDecodingContext"/> associated with this <see cref="DecodeContext"/>.
         /// May be <see langword="null"/> if there is no audio stream.
         /// </summary>
         [CanBeNull]
-        internal AudioDecodingContext AudioContext => _audioContext;
+        internal AudioDecodingContext AudioContext {
+            [DebuggerStepThrough]
+            get {
+                EnsureNotDisposed();
+
+                EnsureInitialized();
+
+                return _audioContext;
+            }
+        }
 
         /// <summary>
-        /// The index of the first video stream in the <see cref="AVFormatContext"/>.
+        /// The index of the video stream finally selected in the <see cref="AVFormatContext"/>.
         /// May be <code>-1</code> if there is no video stream.
         /// </summary>
-        internal int VideoStreamIndex => _videoStreamIndex;
+        internal int VideoStreamIndex {
+            [DebuggerStepThrough]
+            get {
+                EnsureInitialized();
+
+                return _videoStreamIndex;
+            }
+        }
 
         /// <summary>
-        /// The index of the first audio stream in the <see cref="AVFormatContext"/>.
+        /// The index of the audio stream finally selected in the <see cref="AVFormatContext"/>.
         /// May be <code>-1</code> if there is no audio stream.
         /// </summary>
-        internal int AudioStreamIndex => _audioStreamIndex;
+        internal int AudioStreamIndex {
+            [DebuggerStepThrough]
+            get {
+                EnsureInitialized();
+
+                return _audioStreamIndex;
+            }
+        }
 
         /// <summary>
         /// Fetches the latest decoded video frame.
@@ -199,19 +135,143 @@ namespace MonoGame.Extended.VideoPlayback {
         /// May be <see cref="string.Empty"/> if there is no video stream.
         /// </summary>
         [NotNull]
-        internal string VideoCodecName => _videoCodecName ?? string.Empty;
+        internal string VideoCodecName {
+            [DebuggerStepThrough]
+            get {
+                EnsureInitialized();
+
+                return _videoCodecName ?? string.Empty;
+            }
+        }
 
         /// <summary>
         /// Name of the audio codec.
         /// May be <see cref="string.Empty"/> if there is no audio stream.
         /// </summary>
         [NotNull]
-        internal string AudioCodecName => _audioCodecName ?? string.Empty;
+        internal string AudioCodecName {
+            [DebuggerStepThrough]
+            get {
+                EnsureInitialized();
+
+                return _audioCodecName ?? string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// The index of the video stream user selected.
+        /// May be <code>-1</code> for auto selection.
+        /// </summary>
+        public int UserSelectedVideoStreamIndex {
+            [DebuggerStepThrough]
+            get => _userSelectedVideoStreamIndex;
+        }
+
+        /// <summary>
+        /// The index of the audio stream user selected.
+        /// May be <code>-1</code> for auto selection.
+        /// </summary>
+        public int UserSelectedAudioStreamIndex {
+            [DebuggerStepThrough]
+            get => _userSelectedAudioStreamIndex;
+        }
+
+        /// <summary>
+        /// Gets the number of all types of streams in the media file.
+        /// </summary>
+        /// <returns>Number of all type of streams.</returns>
+        internal int GetTotalStreamCount() {
+            return (int)_formatContext->nb_streams;
+        }
+
+        /// <summary>
+        /// Gets the number of video streams in the media file.
+        /// </summary>
+        /// <returns>Number of video streams.</returns>
+        internal int GetVideoStreamCount() {
+            var count = 0;
+
+            for (var i = 0; i < _formatContext->nb_streams; ++i) {
+                var avStream = _formatContext->streams[i];
+
+                if (avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO) {
+                    ++count;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Gets the number of audio streams in the media file.
+        /// </summary>
+        /// <returns>Number of audio streams.</returns>
+        internal int GetAudioStreamCount() {
+            var count = 0;
+
+            for (var i = 0; i < _formatContext->nb_streams; ++i) {
+                var avStream = _formatContext->streams[i];
+
+                if (avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {
+                    ++count;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Selects a video stream by index.
+        /// This method is only valid before initialization.
+        /// </summary>
+        /// <param name="streamIndex">The index of video streams.</param>
+        internal void SelectVideoStream(int streamIndex) {
+            if (_isInitialized) {
+                return;
+            }
+
+            var totalStreams = GetTotalStreamCount();
+
+            if (streamIndex >= totalStreams) {
+                streamIndex = -1;
+            }
+
+            _userSelectedVideoStreamIndex = streamIndex;
+        }
+
+        /// <summary>
+        /// Selects an audio stream by index.
+        /// This method is only valid before initialization.
+        /// </summary>
+        /// <param name="streamIndex">The index of audio streams.</param>
+        internal void SelectAudioStream(int streamIndex) {
+            if (_isInitialized) {
+                return;
+            }
+
+            var totalStreams = GetTotalStreamCount();
+
+            if (streamIndex >= totalStreams) {
+                streamIndex = -1;
+            }
+
+            _userSelectedAudioStreamIndex = streamIndex;
+        }
+
+        /// <summary>
+        /// Forces initializing <see cref="DecodeContext"/> before it is automatically initialized by calling specific methods.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Initialize() {
+            EnsureInitialized();
+        }
 
         /// <summary>
         /// Reset the state of this <see cref="DecodeContext"/> for restarting playback.
         /// </summary>
         internal void Reset() {
+            EnsureInitialized();
+
             // This method may be called in Dispose() so no EnsureNotDisposed() call here.
 
             LockFrameQueuesUpdate();
@@ -261,6 +321,10 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <param name="timeInSeconds"></param>
         internal void Seek(double timeInSeconds) {
+            EnsureNotDisposed();
+
+            EnsureInitialized();
+
             if (timeInSeconds <= 0 || timeInSeconds >= GetDurationInSeconds()) {
                 Reset();
 
@@ -337,6 +401,10 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <param name="presentationTime">Current playback time, in seconds.</param>
         internal void ReadVideoUntilPlaybackIsAfter(double presentationTime) {
+            EnsureNotDisposed();
+
+            EnsureInitialized();
+
             // If we don't have to decode any new frame (just use the current one), skip the later procedures.
             if (_nextDecodingVideoTime > presentationTime) {
                 return;
@@ -415,6 +483,10 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="sound">The <see cref="DynamicSoundEffectInstance"/> to play audio data.</param>
         /// <param name="presentationTime">Current playback time, in seconds.</param>
         internal void ReadAudioUntilPlaybackIsAfter([NotNull] DynamicSoundEffectInstance sound, double presentationTime) {
+            EnsureNotDisposed();
+
+            EnsureInitialized();
+
             var audioContext = _audioContext;
             var audioStream = _audioStream;
             var audioFrame = _audioFrame;
@@ -505,6 +577,9 @@ namespace MonoGame.Extended.VideoPlayback {
         }
 
         protected override void Dispose(bool disposing) {
+            // Prevents initializing after disposal
+            _isInitialized = true;
+
             Reset();
 
             // Video frames are allocated by a frame pool. So we don't need to dispose it here.
@@ -865,15 +940,156 @@ namespace MonoGame.Extended.VideoPlayback {
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void EnsureInitialized() {
+            if (!_isInitialized) {
+                LazyInitialize();
+            }
+        }
+
+        private void LazyInitialize() {
+            if (_isInitialized) {
+                return;
+            }
+
+            var formatContext = _formatContext;
+
+            Trace.Assert(formatContext != null, nameof(formatContext) + " != null");
+
+            var decodingOptions = _decodingOptions;
+
+            // 3. If we are opening an ASF container, we need a different stream start time calculation method.
+            // About start_time and ASF container format (.asf, .wmv), see:
+            // https://www.ffmpeg.org/doxygen/3.0/structAVStream.html#a7c67ae70632c91df8b0f721658ec5377
+            var containerName = FFmpegHelper.PtrToStringNullEnded(formatContext->iformat->name, Encoding.UTF8);
+            var isAsfContainer = containerName == "asf";
+
+            VideoDecodingContext videoContext = null;
+            AudioDecodingContext audioContext = null;
+
+            var visitedVideoStreamIndex = -1;
+            var visitedAudioStreamIndex = -1;
+
+            // 4. Search for video and audio streams.
+            for (var i = 0; i < formatContext->nb_streams; ++i) {
+                var avStream = formatContext->streams[i];
+
+                if (videoContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO) {
+                    ++visitedVideoStreamIndex;
+
+                    if (_userSelectedVideoStreamIndex < 0 || _userSelectedVideoStreamIndex == visitedVideoStreamIndex) {
+                        // 5. If this is a video stream, create a VideoDecodingContext from it...
+                        videoContext = new VideoDecodingContext(avStream, decodingOptions);
+                        _videoStreamIndex = i;
+
+                        // ... and record its start time.
+                        if (!isAsfContainer) {
+                            if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                                _videoStartPts = avStream->start_time;
+                            }
+                        } else {
+                            // I don't know why but this hack works... at least on FFmpeg 3.4.
+                            _videoStartPts = avStream->cur_dts / 2;
+                        }
+                    }
+                } else if (audioContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {
+                    ++visitedAudioStreamIndex;
+
+                    if (_userSelectedAudioStreamIndex < 0 || _userSelectedAudioStreamIndex == visitedAudioStreamIndex) {
+                        // 6. If this is an audio stream, create an AudioDecodingContext from it...
+                        audioContext = new AudioDecodingContext(avStream);
+                        _audioStreamIndex = i;
+
+                        // ... and record its start time.
+                        if (!isAsfContainer) {
+                            if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                                _audioStartPts = avStream->start_time;
+                            }
+                        } else {
+                            _audioStartPts = 0;
+                        }
+                    }
+                }
+            }
+
+            // 7. If we got a video stream...
+            if (videoContext != null) {
+                // ... we should get its codec...
+                var codec = ffmpeg.avcodec_find_decoder(videoContext.CodecContext->codec_id);
+
+                if (codec == null) {
+                    throw new FFmpegException("Failed to find video codec.");
+                }
+
+                FFmpegHelper.Verify(ffmpeg.avcodec_open2(videoContext.CodecContext, codec, null), Dispose);
+
+                // ... and initialize the helper data structures.
+                _videoFramePool = new ObjectPool<IntPtr>(decodingOptions.VideoPacketQueueSizeThreshold, AllocFrame, DeallocFrame);
+                _preparedVideoFrames = new SortedList<long, IntPtr>(decodingOptions.VideoPacketQueueSizeThreshold);
+                _videoCodecName = FFmpegHelper.PtrToStringNullEnded(codec->name, Encoding.UTF8);
+
+                IntPtr AllocFrame() {
+                    return (IntPtr)ffmpeg.av_frame_alloc();
+                }
+
+                void DeallocFrame(IntPtr p) {
+                    var frame = (AVFrame*)p;
+
+                    ffmpeg.av_frame_free(&frame);
+                }
+            }
+
+            // 8. If we got an audio stream...
+            if (audioContext != null) {
+                // ...we should get its codec...
+                var codec = ffmpeg.avcodec_find_decoder(audioContext.CodecContext->codec_id);
+
+                if (codec == null) {
+                    throw new FFmpegException("Failed to find audio codec.");
+                }
+
+                FFmpegHelper.Verify(ffmpeg.avcodec_open2(audioContext.CodecContext, codec, null), Dispose);
+
+                // ... and prepare the buffer frame.
+                _audioFrame = ffmpeg.av_frame_alloc();
+                _audioCodecName = FFmpegHelper.PtrToStringNullEnded(codec->name, Encoding.UTF8);
+            }
+
+            // 9. Finally, set up other objects.
+            if (_videoStreamIndex >= 0) {
+                _videoStream = formatContext->streams[_videoStreamIndex];
+            }
+
+            if (_audioStreamIndex >= 0) {
+                _audioStream = formatContext->streams[_audioStreamIndex];
+            }
+
+            if (videoContext != null) {
+                _videoPackets = new PacketQueue(decodingOptions.VideoPacketQueueCapacity);
+            }
+
+            if (audioContext != null) {
+                _audioPackets = new PacketQueue(decodingOptions.AudioPacketQueueCapacity);
+            }
+
+            _videoContext = videoContext;
+            _audioContext = audioContext;
+
+            _isInitialized = true;
+        }
+
+        [CanBeNull]
         private AVFormatContext* _formatContext;
 
         [CanBeNull]
-        private readonly PacketQueue _videoPackets;
+        private PacketQueue _videoPackets;
+
         [CanBeNull]
-        private readonly PacketQueue _audioPackets;
+        private PacketQueue _audioPackets;
 
         [CanBeNull]
         private VideoDecodingContext _videoContext;
+
         [CanBeNull]
         private AudioDecodingContext _audioContext;
 
@@ -881,18 +1097,21 @@ namespace MonoGame.Extended.VideoPlayback {
         // Note that their usage and life cycle are totally different.
         [CanBeNull]
         private AVFrame* _currentVideoFrame;
+
         [CanBeNull]
         private AVFrame* _audioFrame;
 
         [CanBeNull]
         private AVStream* _videoStream;
+
         [CanBeNull]
         private AVStream* _audioStream;
 
         [CanBeNull]
-        private readonly string _videoCodecName;
+        private string _videoCodecName;
+
         [CanBeNull]
-        private readonly string _audioCodecName;
+        private string _audioCodecName;
 
         /// <summary>
         /// The time of latest decoded video frame, in seconds.
@@ -908,11 +1127,12 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <summary>
         /// Start time of the first frame in the video stream, in video stream's time base.
         /// </summary>
-        private readonly long _videoStartPts;
+        private long _videoStartPts;
+
         /// <summary>
         /// Start time of the first frame in the audio stream, in audio stream's time base.
         /// </summary>
-        private readonly long _audioStartPts;
+        private long _audioStartPts;
 
         /// <summary>
         /// Does the data from the last audio packet still have remains to fill into another audio frame?
@@ -932,15 +1152,23 @@ namespace MonoGame.Extended.VideoPlayback {
         /// The frames are managed by the video frame pool. You should not dispose frames retrived from this list.
         /// </remarks>
         [CanBeNull]
-        private readonly SortedList<long, IntPtr> _preparedVideoFrames;
+        private SortedList<long, IntPtr> _preparedVideoFrames;
 
-        private readonly int _videoStreamIndex = -1;
-        private readonly int _audioStreamIndex = -1;
+        private int _videoStreamIndex = -1;
+
+        private int _audioStreamIndex = -1;
+
+        private int _userSelectedVideoStreamIndex = -1;
+
+        private int _userSelectedAudioStreamIndex = -1;
 
         [NotNull]
         private readonly object _frameQueueUpdateLock = new object();
 
+        [NotNull]
         private readonly DecodingOptions _decodingOptions;
+
+        private bool _isInitialized;
 
     }
 }

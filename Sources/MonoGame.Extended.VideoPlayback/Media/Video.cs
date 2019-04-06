@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Media;
@@ -43,7 +44,7 @@ namespace MonoGame.Extended.Framework.Media {
             get {
                 EnsureNotDisposed();
 
-                return _decodeContext.VideoContext?.GetFramesPerSecond() ?? 0;
+                return _decodeContext?.VideoContext?.GetFramesPerSecond() ?? 0;
             }
         }
 
@@ -54,7 +55,7 @@ namespace MonoGame.Extended.Framework.Media {
             get {
                 EnsureNotDisposed();
 
-                return _decodeContext.VideoContext?.GetHeight() ?? 0;
+                return _decodeContext?.VideoContext?.GetHeight() ?? 0;
             }
         }
 
@@ -77,22 +78,83 @@ namespace MonoGame.Extended.Framework.Media {
             get {
                 EnsureNotDisposed();
 
-                return _decodeContext.VideoContext?.GetWidth() ?? 0;
+                return _decodeContext?.VideoContext?.GetWidth() ?? 0;
             }
         }
 
         /// <summary>
         /// (Non-standard extension) The decoding options used to create this video.
         /// </summary>
+        [NotNull]
         public DecodingOptions DecodingOptions => _decodingOptions;
+
+        /// <summary>
+        /// (Non-standard extension) Gets the number of video streams in the media file.
+        /// </summary>
+        /// <returns>Number of video streams.</returns>
+        public int GetVideoStreamCount() {
+            return _decodeContext?.GetVideoStreamCount() ?? 0;
+        }
+
+        /// <summary>
+        /// (Non-standard extension) Gets the number of audio streams in the media file.
+        /// </summary>
+        /// <returns>Number of audio streams.</returns>
+        public int GetAudioStreamCount() {
+            return _decodeContext?.GetAudioStreamCount() ?? 0;
+        }
+
+        /// <summary>
+        /// (Non-standard extension) Selects a video stream by index.
+        /// This method is only valid before initialization.
+        /// </summary>
+        /// <param name="streamIndex">The index of video streams.</param>
+        public void SelectVideoStream(int streamIndex) {
+            _decodeContext?.SelectVideoStream(streamIndex);
+        }
+
+        /// <summary>
+        /// (Non-standard extension) Selects an audio stream by index.
+        /// This method is only valid before initialization.
+        /// </summary>
+        /// <param name="streamIndex">The index of video streams.</param>
+        public void SelectAudioStream(int streamIndex) {
+            _decodeContext?.SelectAudioStream(streamIndex);
+        }
+
+        /// <summary>
+        /// (Non-standard extension) The index of the video stream user selected.
+        /// May be <code>-1</code> for auto selection.
+        /// </summary>
+        public int UserSelectedVideoStreamIndex {
+            [DebuggerStepThrough]
+            get => _decodeContext?.UserSelectedVideoStreamIndex ?? -1;
+        }
+
+        /// <summary>
+        /// (Non-standard extension) The index of the audio stream user selected.
+        /// May be <code>-1</code> for auto selection.
+        /// </summary>
+        public int UserSelectedAudioStreamIndex {
+            [DebuggerStepThrough]
+            get => _decodeContext?.UserSelectedAudioStreamIndex ?? -1;
+        }
 
         /// <summary>
         /// The decode context of this video.
         /// </summary>
+        [CanBeNull]
         internal DecodeContext DecodeContext => _decodeContext;
 
         /// <summary>
-        /// Retrives lastest decoded video frame in internal <see cref="MonoGame.Extended.VideoPlayback.DecodeContext"/> and transmits its data to a <see cref="Texture2D"/>.
+        /// Forces initializing the <see cref="T:DecodeContext"/>.
+        /// </summary>
+        internal void InitializeDecodeContext() {
+            _decodeContext?.Initialize();
+        }
+
+        /// <summary>
+        /// Retrieves latest decoded video frame in internal <see cref="MonoGame.Extended.VideoPlayback.DecodeContext"/> and transmits its data to a <see cref="Texture2D"/>.
         /// Returns whether the operation is successful.
         /// </summary>
         /// <param name="textureBuffer">The <see cref="Texture2D"/> serving as the data buffer.</param>
@@ -112,8 +174,12 @@ namespace MonoGame.Extended.Framework.Media {
 
             // The decoding thread also tries to update the frame content.
             // So here we need to add a lock to prevent strange things from happening.
-            lock (_decodeContext.VideoFrameTransmissionLock) {
-                r = FFmpegHelper.TransmitVideoFrame(_decodeContext, textureBuffer, _frameDataBuffer);
+            if (_decodeContext != null) {
+                lock (_decodeContext.VideoFrameTransmissionLock) {
+                    r = FFmpegHelper.TransmitVideoFrame(_decodeContext, textureBuffer, _frameDataBuffer);
+                }
+            } else {
+                r = false;
             }
 
             return r;
@@ -132,8 +198,13 @@ namespace MonoGame.Extended.Framework.Media {
             Ended?.Invoke(this, EventArgs.Empty);
         }
 
+        [CanBeNull]
         private uint[] _frameDataBuffer;
+
+        [CanBeNull]
         private DecodeContext _decodeContext;
+
+        [NotNull]
         private readonly DecodingOptions _decodingOptions;
 
     }

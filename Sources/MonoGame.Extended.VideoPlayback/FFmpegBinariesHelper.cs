@@ -48,6 +48,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
                         current = Directory.GetParent(current)?.FullName;
                     }
+
                     break;
                 case PlatformID.Unix:
                 case PlatformID.MacOSX:
@@ -81,6 +82,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         var newValue = currentValue + Path.PathSeparator + path;
                         Environment.SetEnvironmentVariable(LD_LIBRARY_PATH, newValue);
                     }
+
                     break;
             }
         }
@@ -88,6 +90,7 @@ namespace MonoGame.Extended.VideoPlayback {
         [DllImport("kernel32", SetLastError = true)]
         private static extern bool SetDllDirectory(string lpPathName);
 
+        // ReSharper disable once InconsistentNaming
         private const string LD_LIBRARY_PATH = "LD_LIBRARY_PATH";
 
         private static bool _pathsRegistered;

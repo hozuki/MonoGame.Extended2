@@ -43,6 +43,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGame.Extended.WinForms.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.WinForms.WindowsDX", "Demos\Demo.WinForms.WindowsDX\Demo.WinForms.WindowsDX.csproj", "{2A76D625-93CA-4A5A-AF53-C974C3A4CCC2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assassin", "thirdparty\assassin\src\Assassin\Assassin.csproj", "{53BE11CA-195C-4007-9C2A-C7FE019D469B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.VideoPlayback.AssSubtitle", "Demos\Demo.VideoPlayback.AssSubtitle\Demo.VideoPlayback.AssSubtitle.csproj", "{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -187,6 +191,22 @@ Global
 		{2A76D625-93CA-4A5A-AF53-C974C3A4CCC2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A76D625-93CA-4A5A-AF53-C974C3A4CCC2}.ReleaseDouble|Any CPU.ActiveCfg = Release|Any CPU
 		{2A76D625-93CA-4A5A-AF53-C974C3A4CCC2}.ReleaseDouble|Any CPU.Build.0 = Release|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.DebugDouble|Any CPU.ActiveCfg = Debug|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.DebugDouble|Any CPU.Build.0 = Debug|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.ReleaseDouble|Any CPU.ActiveCfg = Debug|Any CPU
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B}.ReleaseDouble|Any CPU.Build.0 = Debug|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.DebugDouble|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.DebugDouble|Any CPU.Build.0 = Debug|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.ReleaseDouble|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}.ReleaseDouble|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -209,6 +229,8 @@ Global
 		{75C5CA58-8C8E-4C44-80E9-E1697339B46E} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
 		{D8F21338-24AE-4CD9-A6DA-504E798D4CB9} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
 		{2A76D625-93CA-4A5A-AF53-C974C3A4CCC2} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
+		{53BE11CA-195C-4007-9C2A-C7FE019D469B} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
+		{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F8E88228-0CD9-4899-B3A9-746246164A9D}

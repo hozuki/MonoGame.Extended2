@@ -1,4 +1,5 @@
 ﻿using System;
+using Demo.VideoPlayback.AssSubtitle;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -55,7 +56,18 @@ namespace Demo.VideoPlayback.DesktopGL {
 
             _helpTexture = TextureLoader.LoadTexture(GraphicsDevice, "Content/HelpTexture.png");
 
+#if true
             _video = VideoHelper.LoadFromFile("Content/SampleVideo_1280x720_1mb.mp4");
+#else
+            _video = VideoHelper.LoadFromFile(@"D:\Videos\sm32324383.mp4");
+
+            var subtitle = new AssSubtitleRenderer();
+
+            subtitle.LoadFromFile(@"D:\Videos\sm32324383.ass");
+            subtitle.Enabled = true;
+
+            _videoPlayer.SubtitleRenderer = subtitle;
+#endif
 
             _videoPlayer.Play(_video);
         }

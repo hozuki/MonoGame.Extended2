@@ -4,3 +4,6 @@
 [submodule "thirdparty/AdaptiveSubdivision"]
 	path = thirdparty/AdaptiveSubdivision
 	url = https://github.com/OpenMLTD/AdaptiveSubdivision.git
+[submodule "thirdparty/assassin"]
+	path = thirdparty/assassin
+	url = https://github.com/hozuki/assassin

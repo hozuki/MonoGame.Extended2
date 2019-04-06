@@ -27,9 +27,10 @@ namespace MonoGame.Extended {
                 return;
             }
 
+            Dispose(true);
+
             IsDisposed = true;
 
-            Dispose(true);
             Disposed?.Invoke(this, EventArgs.Empty);
 
             GC.SuppressFinalize(this);

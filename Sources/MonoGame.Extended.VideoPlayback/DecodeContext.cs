@@ -146,12 +146,12 @@ namespace MonoGame.Extended.VideoPlayback {
         /// Raises when video playback is ended.
         /// </summary>
         /// <remarks>
-        /// This event MUST be raised asynchrously.
+        /// This event MUST be raised asynchronously.
         /// The reason is that subscribers (i.e. <see cref="Framework.Media.Video.decodeContext_Ended"/>) may raise their events synchrously.
         /// The call flow can go to <see cref="Framework.Media.VideoPlayer.video_Ended"/>, where <see cref="Framework.Media.VideoPlayer.Stop"/> is called.
         /// Inside <see cref="Framework.Media.VideoPlayer.Stop"/>, it calls <see cref="Thread.Join()"/> on <see cref="Framework.Media.VideoPlayer.DecodingThread.SystemThread"/>,
         /// which waits for the decoding thread that raises the initial <see cref="Ended"/> event infinitely.
-        /// So you see, there will be a dead lock if <see cref="Ended"/> is raised synchrously.
+        /// So you see, there will be a dead lock if <see cref="Ended"/> is raised synchronously.
         /// </remarks>
         internal event EventHandler<EventArgs> Ended;
 

@@ -138,7 +138,9 @@ namespace MonoGame.Extended.Framework.Media {
                     _exceptionalExit = false;
                 } catch (Exception ex) {
                     _exceptionalExit = true;
+#if DEBUG
                     _exitCause = ex;
+#endif
 
                     // Here is a trick to raise an exception from a worker thread with a correct stack trace.
                     // First, the exception must be raised in the main thread, otherwise the application crashes immediately.

@@ -71,6 +71,8 @@
     <Compile Include="Media\ISubtitleRenderer.cs" />
     <Compile Include="Media\SubtitleRenderer.cs" />
     <Compile Include="ObjectPool`1.cs" />
+    <Compile Include="Packet.cs" />
+    <Compile Include="PacketComparer.cs" />
     <Compile Include="PacketQueue.cs" />
     <Compile Include="Media\Video.cs" />
     <Compile Include="PacketQueueComparison.cs" />

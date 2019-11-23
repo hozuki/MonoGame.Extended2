@@ -1,4 +1,5 @@
-﻿using MonoGame.Extended.VideoPlayback.VideoDecoding;
+﻿using JetBrains.Annotations;
+using MonoGame.Extended.VideoPlayback.VideoDecoding;
 
 namespace MonoGame.Extended.VideoPlayback {
     /// <summary>
@@ -58,6 +59,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <summary>
         /// Default decoding options.
         /// </summary>
+        [NotNull]
         public static readonly DecodingOptions Default
             = new DecodingOptions(
                 512,
@@ -66,7 +68,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 30, // Audio packets are usually more than video packets.
                 FrameScalingMethod.Default,
                 800
-                );
+            );
 
     }
 }

@@ -120,7 +120,7 @@ protected override void Draw(GameTime gameTime) {
         spriteBatch.End();
     }
 
-    texture?.Dispose();
+    // Do NOT dispose the obtained texture. It is a image cache so it is not recreated every call.
 
     base.Draw(gameTime);
 }

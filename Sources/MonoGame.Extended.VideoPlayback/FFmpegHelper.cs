@@ -53,6 +53,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// If an error occurs, this method throws a <see cref="FFmpegException"/>.
         /// </summary>
         /// <param name="avError">The error code.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Verify(int avError) {
             Verify(avError, null);
         }
@@ -63,6 +64,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <param name="avError">The error code.</param>
         /// <param name="cleanupProc">The clean-up method. Ignored if set to <see langword="null"/>.</param>
+        /// <exception cref="FFmpegException">Thrown when <paramref name="avError"/> does not imply success.</exception>
         internal static void Verify(int avError, [CanBeNull] Action cleanupProc) {
             if (avError >= 0) {
                 return;
@@ -79,9 +81,14 @@ namespace MonoGame.Extended.VideoPlayback {
             }
 
             var tailIndex = Array.IndexOf(errorBuffer, (byte)0);
+
+            if (tailIndex < 0) {
+                tailIndex = errorBuffer.Length;
+            }
+
             var errorString = Encoding.UTF8.GetString(errorBuffer, 0, tailIndex);
 
-            throw new FFmpegException(errorString);
+            throw new FFmpegException(errorString, avError);
         }
 
         /// <summary>
@@ -94,6 +101,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// The best practice is use <see cref="AVStream.duration"/> to get the duration of a stream, because some media files has multiple streams with different lengths (e.g. director's cut and theater's cut in one .mkv).
         /// That method is accurate but requires user interaction to select the stream they want, also that situation is not so common. So here we still use <see cref="AVFormatContext"/> to get the duration.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static double GetDurationInSeconds([CanBeNull] AVFormatContext* context) {
             if (context == null) {
                 return 0;
@@ -110,6 +118,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="stream">The <see cref="AVStream"/> whose time base is going to be the calculation standard.</param>
         /// <param name="pts">Value of the presentation timestamp.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static double ConvertPtsToSeconds([CanBeNull] AVStream* stream, long pts) {
             if (stream == null) {
                 return 0;
@@ -129,6 +138,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="stream">The <see cref="AVStream"/> whose time base is going to be the calculation standard.</param>
         /// <param name="seconds">Time, in seconds.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static long ConvertSecondsToPts([CanBeNull] AVStream* stream, double seconds) {
             if (stream == null) {
                 return 0;
@@ -156,6 +166,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="seconds">Time, in seconds.</param>
         /// <param name="startPts">Extra starting PTS. For example, the video starting PTS.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static long ConvertSecondsToPts(double seconds, long startPts) {
             var result = (long)Math.Round(seconds * ffmpeg.AV_TIME_BASE);
 
@@ -173,7 +184,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <returns>The string, in <see cref="string"/>.</returns>
         [CanBeNull]
         [ContractAnnotation("ptr:null=>null")]
-        internal static string PtrToStringNullEnded([CanBeNull] byte* ptr, [NotNull] Encoding encoding) {
+        internal static string PtrToStringNullTerminated([CanBeNull] byte* ptr, [NotNull] Encoding encoding) {
             if (ptr == null) {
                 return null;
             }
@@ -324,53 +335,66 @@ namespace MonoGame.Extended.VideoPlayback {
 
             // About dstData and being continuous:
             // We only care about 16-bit stereo audio, so the audio output always has 1 plane (not planar).
-            // For more complicated situtations: http://blog.csdn.net/dancing_night/article/details/45642107
-            byte** dstData;
-            int dstLineSize;
+            // For more complicated situations: http://blog.csdn.net/dancing_night/article/details/45642107
+            byte** dstData = null;
+            var dstLineSize = 0;
 
-            // Allocate channel array and sample buffers.
-            Verify(ffmpeg.av_samples_alloc_array_and_samples(&dstData, &dstLineSize, dstChannels, dstSampleCount, dstSampleFormat, 0));
+            try {
+                // Allocate channel array and sample buffers.
+                Verify(ffmpeg.av_samples_alloc_array_and_samples(&dstData, &dstLineSize, dstChannels, dstSampleCount, dstSampleFormat, 0));
 
-            // Then consider the possible resample delay and calculate the correct number of samples.
-            // TODO: Isn't this redundant? We may use this value in the first place.
-            dstSampleCount = (int)ffmpeg.av_rescale_rnd(ffmpeg.swr_get_delay(resampleContext, audioContext.SampleRate) + frame->nb_samples, dstSampleRate, audioContext.SampleRate, AVRounding.AV_ROUND_UP);
+                Debug.Assert(dstData != null);
 
-            if (dstSampleCount <= 0) {
-                throw new FFmpegException("Failed to calculate rescaled sample count (with possible delays).");
-            }
+                // Then consider the possible resample delay and calculate the correct number of samples.
+                // TODO: Isn't this redundant? We may use this value in the first place.
+                dstSampleCount = (int)ffmpeg.av_rescale_rnd(ffmpeg.swr_get_delay(resampleContext, audioContext.SampleRate) + frame->nb_samples, dstSampleRate, audioContext.SampleRate, AVRounding.AV_ROUND_UP);
 
-            // If there is a delay, we have to adjust the buffers allocated. (Yeah actually one buffer.)
-            if (dstSampleCount > roughDstSampleCount) {
-                ffmpeg.av_free(dstData[0]);
+                if (dstSampleCount <= 0) {
+                    throw new FFmpegException("Failed to calculate rescaled sample count (with possible delays).");
+                }
 
-                Verify(ffmpeg.av_samples_alloc(dstData, &dstLineSize, dstChannels, dstSampleCount, dstSampleFormat, 1));
-            }
+                // If there is a delay, we have to adjust the buffers allocated. (Yeah actually one buffer.)
+                if (dstSampleCount > roughDstSampleCount) {
+                    ffmpeg.av_free(&dstData[0]);
 
-            var ptrs = frame->data.ToArray();
-            int convertRet;
+                    Verify(ffmpeg.av_samples_alloc(dstData, &dstLineSize, dstChannels, dstSampleCount, dstSampleFormat, 1));
+                }
 
-            // Next, resample.
-            fixed (byte** data = ptrs) {
-                convertRet = ffmpeg.swr_convert(resampleContext, dstData, dstSampleCount, data, frame->nb_samples);
+                var ptrs = frame->data.ToArray();
+                int convertRet;
 
-                Verify(convertRet);
-            }
+                // Next, resample.
+                fixed (byte** data = ptrs) {
+                    convertRet = ffmpeg.swr_convert(resampleContext, dstData, dstSampleCount, data, frame->nb_samples);
 
-            // Get resampled data size...
-            var resampledDataSize = ffmpeg.av_samples_get_buffer_size(&dstLineSize, dstChannels, convertRet, dstSampleFormat, 1);
+                    Verify(convertRet);
+                }
 
-            // ... allocates the buffer...
-            buffer = new byte[resampledDataSize];
+                // Get resampled data size...
+                var resampledDataSize = ffmpeg.av_samples_get_buffer_size(&dstLineSize, dstChannels, convertRet, dstSampleFormat, 1);
 
-            // .. and write to it.
-            using (var dest = new MemoryStream(buffer, true)) {
-                using (var src = new UnmanagedMemoryStream(dstData[0], resampledDataSize)) {
-                    src.CopyTo(dest);
+                // ... allocates the buffer...
+                buffer = new byte[resampledDataSize];
+
+                // .. and write to it.
+                using (var dest = new MemoryStream(buffer, true)) {
+                    // TODO: sometimes dstData[0] is null?
+                    if (dstData[0] != null) {
+                        using (var src = new UnmanagedMemoryStream(dstData[0], resampledDataSize)) {
+                            src.CopyTo(dest);
+                        }
+                    }
+                }
+            } finally {
+                // Finally, clean up the native buffers.
+                if (dstData != null) {
+                    if (dstData[0] != null) {
+                        ffmpeg.av_freep(&dstData[0]);
+                    }
+
+                    ffmpeg.av_freep(dstData);
                 }
             }
-
-            // Finally, clean up the native buffer.
-            ffmpeg.av_freep(dstData);
 
             return true;
         }

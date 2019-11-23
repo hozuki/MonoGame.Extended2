@@ -29,8 +29,8 @@ namespace MonoGame.Extended.VideoPlayback {
 
             // 1. Open a format context.
             var formatContext = ffmpeg.avformat_alloc_context();
-            FFmpegHelper.Verify(ffmpeg.avformat_open_input(&formatContext, url, null, null), Dispose);
             _formatContext = formatContext;
+            FFmpegHelper.Verify(ffmpeg.avformat_open_input(&formatContext, url, null, null), Dispose);
 
             // 2. Try to read stream information (codec, duration, etc.).
             FFmpegHelper.Verify(ffmpeg.avformat_find_stream_info(formatContext, null), Dispose);
@@ -43,7 +43,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <remarks>
         /// This event MUST be raised asynchronously.
-        /// The reason is that subscribers (i.e. <see cref="Framework.Media.Video.decodeContext_Ended"/>) may raise their events synchrously.
+        /// The reason is that subscribers (i.e. <see cref="Framework.Media.Video.decodeContext_Ended"/>) may raise their events synchronously.
         /// The call flow can go to <see cref="Framework.Media.VideoPlayer.video_Ended"/>, where <see cref="Framework.Media.VideoPlayer.Stop"/> is called.
         /// Inside <see cref="Framework.Media.VideoPlayer.Stop"/>, it calls <see cref="Thread.Join()"/> on <see cref="Framework.Media.VideoPlayer.DecodingThread.SystemThread"/>,
         /// which waits for the decoding thread that raises the initial <see cref="Ended"/> event infinitely.
@@ -73,7 +73,6 @@ namespace MonoGame.Extended.VideoPlayback {
             [DebuggerStepThrough]
             get {
                 EnsureNotDisposed();
-
                 EnsureInitialized();
 
                 return _videoContext;
@@ -89,7 +88,6 @@ namespace MonoGame.Extended.VideoPlayback {
             [DebuggerStepThrough]
             get {
                 EnsureNotDisposed();
-
                 EnsureInitialized();
 
                 return _audioContext;
@@ -174,6 +172,22 @@ namespace MonoGame.Extended.VideoPlayback {
         public int UserSelectedAudioStreamIndex {
             [DebuggerStepThrough]
             get => _userSelectedAudioStreamIndex;
+        }
+
+        /// <summary>
+        /// Whether auto looping is enabled.
+        /// </summary>
+        internal bool IsLooped {
+            [DebuggerStepThrough]
+            get => _isLooped;
+            [DebuggerStepThrough]
+            set {
+                _isLooped = value;
+
+                if (!value) {
+                    _currentLoopNumber = 0;
+                }
+            }
         }
 
         /// <summary>
@@ -276,114 +290,72 @@ namespace MonoGame.Extended.VideoPlayback {
 
             LockFrameQueuesUpdate();
 
-            if (_videoPackets != null) {
-                while (_videoPackets.Count > 0) {
-                    var packet = _videoPackets.Dequeue();
+            try {
+                ResetBeforeSeek();
 
-                    ffmpeg.av_packet_unref(&packet);
+                // When playing large video files, independently seeking audio and video streams
+                // causes error number -11 thrown in TryFetchVideoFrames at first several (sometimes more than 40) frames.
+                // But using the index -1 (seeking all streams at the same time) works...
+                if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0) {
+                    FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, 0, ffmpeg.AVSEEK_FLAG_BACKWARD), Dispose);
                 }
+
+                ResetAfterSeek();
+            } finally {
+                UnlockFrameQueueUpdate();
             }
-
-            if (_audioPackets != null) {
-                while (_audioPackets.Count > 0) {
-                    var packet = _audioPackets.Dequeue();
-
-                    ffmpeg.av_packet_unref(&packet);
-                }
-            }
-
-            // When playing large video files, independently seeking audio and video streams
-            // causes error number -11 thrown in TryFetchVideoFrames at first several (sometimes more than 40) frames.
-            // But using the index -1 (seeking all streams at the same time) works...
-            if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0) {
-                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, 0, ffmpeg.AVSEEK_FLAG_BACKWARD), Dispose);
-            }
-
-            _videoFramePool?.Reset();
-            _preparedVideoFrames?.Clear();
-
-            // Clear the staging data in buffer audio frame.
-            ffmpeg.av_frame_unref(_audioFrame);
-            // The point is the same. But since video frames are managed by a frame pool, we just need to set this to null.
-            _currentVideoFrame = null;
-
-            _audioPacketDecodingOngoing = false;
-
-            _isEndedTriggered = false;
-
-            _nextDecodingVideoTime = double.MinValue;
-
-            UnlockFrameQueueUpdate();
         }
 
         /// <summary>
         /// Seek to the specified time. If the time is out of video range, it calls <see cref="Reset"/>.
         /// </summary>
-        /// <param name="timeInSeconds"></param>
+        /// <param name="timeInSeconds">Target time in seconds.</param>
         internal void Seek(double timeInSeconds) {
-            EnsureNotDisposed();
+            Seek(timeInSeconds, true);
+        }
 
+        /// <summary>
+        /// Seek to the specified time. If the time is out of video range, it calls <see cref="Reset"/>.
+        /// </summary>
+        /// <param name="timeInSeconds">Target time in seconds.</param>
+        /// <param name="pseudoReset">Whether reset decoding state.</param>
+        private void Seek(double timeInSeconds, bool pseudoReset) {
+            EnsureNotDisposed();
             EnsureInitialized();
 
-            if (timeInSeconds <= 0 || timeInSeconds >= GetDurationInSeconds()) {
-                Reset();
+            // Normal playback seeking behavior
+            if (!IsLooped) {
+                if (timeInSeconds <= 0 || timeInSeconds >= GetDurationInSeconds()) {
+                    Reset();
 
-                return;
+                    return;
+                }
             }
 
             LockFrameQueuesUpdate();
 
-            if (_videoPackets != null) {
-                while (_videoPackets.Count > 0) {
-                    var packet = _videoPackets.Dequeue();
-
-                    ffmpeg.av_packet_unref(&packet);
+            try {
+                if (pseudoReset) {
+                    ResetBeforeSeek();
                 }
-            }
 
-            if (_audioPackets != null) {
-                while (_audioPackets.Count > 0) {
-                    var packet = _audioPackets.Dequeue();
+                var seekFlags = 0 & ffmpeg.AVSEEK_FLAG_ANY;
 
-                    ffmpeg.av_packet_unref(&packet);
+                if (_nextDecodingVideoTime > timeInSeconds) {
+                    seekFlags |= ffmpeg.AVSEEK_FLAG_BACKWARD;
                 }
+
+                if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0) {
+                    var timestamp = FFmpegHelper.ConvertSecondsToPts(timeInSeconds);
+                    FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, timestamp, seekFlags), Dispose);
+                }
+
+                if (pseudoReset) {
+                    ResetAfterSeek();
+                }
+            } finally {
+                UnlockFrameQueueUpdate();
             }
-
-            var seekFlags = 0 & ffmpeg.AVSEEK_FLAG_ANY;
-
-            if (_nextDecodingVideoTime > timeInSeconds) {
-                seekFlags |= ffmpeg.AVSEEK_FLAG_BACKWARD;
-            }
-
-            if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0) {
-                var timestamp = FFmpegHelper.ConvertSecondsToPts(timeInSeconds);
-                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, timestamp, seekFlags), Dispose);
-            }
-
-            //if (VideoStreamIndex >= 0) {
-            //    var timestamp = FFmpegHelper.ConvertSecondsToPts(_videoStream, timeInSeconds);
-            //    FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, VideoStreamIndex, timestamp, seekFlags), Dispose);
-            //}
-
-            //if (AudioStreamIndex >= 0) {
-            //    var timestamp = FFmpegHelper.ConvertSecondsToPts(_audioStream, timeInSeconds);
-            //    FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, AudioStreamIndex, timestamp, seekFlags), Dispose);
-            //}
-
-            _preparedVideoFrames?.Clear();
-            _videoFramePool?.Reset();
-
-            ffmpeg.av_frame_unref(_audioFrame);
-
-            _currentVideoFrame = null;
-
-            _audioPacketDecodingOngoing = false;
-
-            _isEndedTriggered = false;
-
-            _nextDecodingVideoTime = double.MinValue;
-
-            UnlockFrameQueueUpdate();
         }
 
         /// <summary>
@@ -391,9 +363,14 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <returns>The duration of the video file, in seconds.</returns>
         internal double GetDurationInSeconds() {
-            EnsureNotDisposed();
+            if (_duration == null) {
+                // Duration info can be retrieved without initialization, so no need to call EnsureInitialized().
+                EnsureNotDisposed();
 
-            return FFmpegHelper.GetDurationInSeconds(_formatContext);
+                _duration = FFmpegHelper.GetDurationInSeconds(_formatContext);
+            }
+
+            return _duration.Value;
         }
 
         /// <summary>
@@ -402,7 +379,6 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="presentationTime">Current playback time, in seconds.</param>
         internal void ReadVideoUntilPlaybackIsAfter(double presentationTime) {
             EnsureNotDisposed();
-
             EnsureInitialized();
 
             // If we don't have to decode any new frame (just use the current one), skip the later procedures.
@@ -414,9 +390,9 @@ namespace MonoGame.Extended.VideoPlayback {
             var videoStream = _videoStream;
             var framePool = _videoFramePool;
             var frameQueue = _preparedVideoFrames;
-            var videoPackts = _videoPackets;
+            var videoPackets = _videoPackets;
 
-            if (videoContext == null || videoStream == null || framePool == null || frameQueue == null || videoPackts == null) {
+            if (videoContext == null || videoStream == null || framePool == null || frameQueue == null || videoPackets == null) {
                 return;
             }
 
@@ -433,7 +409,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 if (r) {
                     // If the queue of decoded frames is not empty, then get its presentation timestamp (PTS) and convert it to seconds.
                     var decodedPresentationPts = frameQueue.PeekFirstKey();
-                    decodedPresentationTime = FFmpegHelper.ConvertPtsToSeconds(videoStream, decodedPresentationPts + _videoStartPts);
+                    decodedPresentationTime = PtsToSeconds(videoStream, decodedPresentationPts + _videoStartPts);
 
                     // Now get the frame.
                     var p = frameQueue.Dequeue();
@@ -469,11 +445,30 @@ namespace MonoGame.Extended.VideoPlayback {
             }
 
             // If the video stream ends, raise Ended event.
-            if (!r && videoPackts.Count == 0 && !_isEndedTriggered) {
-                // Must use BeginInvoke. See the explanations of Ended.
-                Ended?.BeginInvoke(this, EventArgs.Empty, null, null);
+            if (!r && videoPackets.Count == 0) {
+                if (IsLooped) {
+                    ++_currentLoopNumber;
 
-                _isEndedTriggered = true;
+                    // About avcodec_flush_buffers:
+                    // https://ffmpeg.org/doxygen/3.1/group__lavc__encdec.html
+
+                    if (_videoContext != null) {
+                        ffmpeg.avcodec_flush_buffers(_videoContext.CodecContext);
+                    }
+
+                    if (_audioContext != null) {
+                        ffmpeg.avcodec_flush_buffers(_audioContext.CodecContext);
+                    }
+
+                    Seek(0, false);
+                } else {
+                    if (!_isEndedTriggered) {
+                        // Must use BeginInvoke. See the explanations of Ended.
+                        Ended?.BeginInvoke(this, EventArgs.Empty, null, null);
+
+                        _isEndedTriggered = true;
+                    }
+                }
             }
         }
 
@@ -484,7 +479,6 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="presentationTime">Current playback time, in seconds.</param>
         internal void ReadAudioUntilPlaybackIsAfter([NotNull] DynamicSoundEffectInstance sound, double presentationTime) {
             EnsureNotDisposed();
-
             EnsureInitialized();
 
             var audioContext = _audioContext;
@@ -504,7 +498,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
                 {
                     var pts = audioFrame->pts;
-                    var framePresentationTime = FFmpegHelper.ConvertPtsToSeconds(audioStream, pts + _audioStartPts);
+                    var framePresentationTime = PtsToSeconds(audioStream, pts + _audioStartPts);
 
                     if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
                         // If our time has not come, skip the rest of the procedures.
@@ -530,7 +524,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         }
 
                         var pts = audioFrame->pts;
-                        var framePresentationTime = FFmpegHelper.ConvertPtsToSeconds(audioStream, pts + _audioStartPts);
+                        var framePresentationTime = PtsToSeconds(audioStream, pts + _audioStartPts);
 
                         if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
                             break;
@@ -614,7 +608,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <param name="packet">The packet got, or an empty packet if the operation fails.</param>
         /// <returns><see langword="true"/> if the operation succeeds, otherwise <see langword="false"/>.</returns>
-        private bool TryGetNextVideoPacket(out AVPacket packet) {
+        private bool TryGetNextVideoPacket(out Packet packet) {
             EnsureNotDisposed();
 
             var queue = _videoPackets;
@@ -623,7 +617,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
             if (!TryFillPacketQueue(queue, _decodingOptions.VideoPacketQueueSizeThreshold)) {
                 if (queue.Count == 0) {
-                    packet = default(AVPacket);
+                    packet = default(Packet);
 
                     return false;
                 }
@@ -639,7 +633,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         /// <param name="packet">The packet got, or an empty packet if the operation fails.</param>
         /// <returns><see langword="true"/> if the operation succeeds, otherwise <see langword="false"/>.</returns>
-        private bool TryGetNextAudioPacket(out AVPacket packet) {
+        private bool TryGetNextAudioPacket(out Packet packet) {
             EnsureNotDisposed();
 
             var queue = _audioPackets;
@@ -648,7 +642,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
             if (!TryFillPacketQueue(queue, _decodingOptions.AudioPacketQueueSizeThreshold)) {
                 if (queue.Count == 0) {
-                    packet = default(AVPacket);
+                    packet = default(Packet);
 
                     return false;
                 }
@@ -693,23 +687,23 @@ namespace MonoGame.Extended.VideoPlayback {
 
             Debug.Assert(frameQueue != null && framePool != null);
 
-            var packet = new AVPacket();
+            var packet = new Packet(_currentLoopNumber);
 
             while (frameQueue.Count < count) {
                 var decodingSuccessful = false;
 
                 while (true) {
-                    ffmpeg.av_packet_unref(&packet);
+                    ffmpeg.av_packet_unref(&packet.RawPacket);
 
                     if (!TryGetNextVideoPacket(out packet)) {
                         break;
                     }
 
-                    if (packet.size == 0) {
+                    if (packet.RawPacket.size == 0) {
                         break;
                     }
 
-                    var videoTime = FFmpegHelper.ConvertPtsToSeconds(avStream, packet.pts + _videoStartPts);
+                    var videoTime = PtsToSeconds(avStream, packet.RawPacket.pts + _videoStartPts);
 
                     if (videoTime < 0) {
                         break;
@@ -719,7 +713,7 @@ namespace MonoGame.Extended.VideoPlayback {
                     // https://ffmpeg.org/doxygen/3.1/group__lavc__encdec.html
 
                     // First we send a video packet.
-                    var error = ffmpeg.avcodec_send_packet(codecContext, &packet);
+                    var error = ffmpeg.avcodec_send_packet(codecContext, &packet.RawPacket);
 
                     if (error != 0) {
                         if (error == ffmpeg.AVERROR_EOF) {
@@ -745,7 +739,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
                     if (error == 0) {
                         // If everything goes well, then again, lucky us.
-                        ffmpeg.av_packet_unref(&packet);
+                        ffmpeg.av_packet_unref(&packet.RawPacket);
                         frameQueue.Enqueue(frame->pts, (IntPtr)frame);
                         decodingSuccessful = true;
 
@@ -788,7 +782,7 @@ namespace MonoGame.Extended.VideoPlayback {
             }
 
             // Clean up.
-            ffmpeg.av_packet_unref(&packet);
+            ffmpeg.av_packet_unref(&packet.RawPacket);
 
             return frameQueue.Count > 0;
         }
@@ -824,28 +818,28 @@ namespace MonoGame.Extended.VideoPlayback {
                 }
             }
 
-            var packet = new AVPacket();
+            var packet = new Packet(_currentLoopNumber);
 
             // Other logics are similar to those in TryFetchVideoFrames.
 
             while (true) {
-                ffmpeg.av_packet_unref(&packet);
+                ffmpeg.av_packet_unref(&packet.RawPacket);
 
                 if (!TryGetNextAudioPacket(out packet)) {
                     break;
                 }
 
-                if (packet.size == 0) {
+                if (packet.RawPacket.size == 0) {
                     break;
                 }
 
-                var audioTime = FFmpegHelper.ConvertPtsToSeconds(avStream, packet.pts + _audioStartPts);
+                var audioTime = PtsToSeconds(avStream, packet.RawPacket.pts + _audioStartPts);
 
                 if (audioTime < 0) {
                     break;
                 }
 
-                var error = ffmpeg.avcodec_send_packet(codecContext, &packet);
+                var error = ffmpeg.avcodec_send_packet(codecContext, &packet.RawPacket);
 
                 if (error != 0) {
                     if (error == ffmpeg.AVERROR_EOF) {
@@ -871,7 +865,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 error = ffmpeg.avcodec_receive_frame(codecContext, frame);
 
                 if (error == 0) {
-                    ffmpeg.av_packet_unref(&packet);
+                    ffmpeg.av_packet_unref(&packet.RawPacket);
 
                     // The packet received is fully consumed.
                     _audioPacketDecodingOngoing = true;
@@ -886,7 +880,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 }
             }
 
-            ffmpeg.av_packet_unref(&packet);
+            ffmpeg.av_packet_unref(&packet.RawPacket);
 
             return false;
         }
@@ -902,10 +896,10 @@ namespace MonoGame.Extended.VideoPlayback {
         /// a packet is enqueued.
         /// </remarks>
         private bool ReadNextPacket() {
-            var packet = new AVPacket();
+            var packet = new Packet(_currentLoopNumber);
 
             // Read the next packet from current format container.
-            var error = ffmpeg.av_read_frame(FormatContext, &packet);
+            var error = ffmpeg.av_read_frame(FormatContext, &packet.RawPacket);
 
             if (error < 0) {
                 if (error == ffmpeg.AVERROR_EOF) {
@@ -916,25 +910,25 @@ namespace MonoGame.Extended.VideoPlayback {
             }
 
             // Is this an empty packet?
-            if (!(packet.data != null && packet.size > 0)) {
-                ffmpeg.av_packet_unref(&packet);
+            if (!(packet.RawPacket.data != null && packet.RawPacket.size > 0)) {
+                ffmpeg.av_packet_unref(&packet.RawPacket);
 
                 return false;
             }
 
-            if (packet.stream_index == VideoStreamIndex) {
+            if (packet.RawPacket.stream_index == VideoStreamIndex) {
                 // If this packet belongs to the video stream, enqueue it to the video packet queue.
                 Debug.Assert(_videoPackets != null);
 
                 _videoPackets.Enqueue(packet);
-            } else if (packet.stream_index == AudioStreamIndex) {
+            } else if (packet.RawPacket.stream_index == AudioStreamIndex) {
                 // If this packet belongs to the audio stream, enqueue it to the audio packet queue.
                 Debug.Assert(_audioPackets != null);
 
                 _audioPackets.Enqueue(packet);
             } else {
                 // Otherwise, ignore this packet.
-                ffmpeg.av_packet_unref(&packet);
+                ffmpeg.av_packet_unref(&packet.RawPacket);
             }
 
             return true;
@@ -961,7 +955,7 @@ namespace MonoGame.Extended.VideoPlayback {
             // 3. If we are opening an ASF container, we need a different stream start time calculation method.
             // About start_time and ASF container format (.asf, .wmv), see:
             // https://www.ffmpeg.org/doxygen/3.0/structAVStream.html#a7c67ae70632c91df8b0f721658ec5377
-            var containerName = FFmpegHelper.PtrToStringNullEnded(formatContext->iformat->name, Encoding.UTF8);
+            var containerName = FFmpegHelper.PtrToStringNullTerminated(formatContext->iformat->name, Encoding.UTF8);
             var isAsfContainer = containerName == "asf";
 
             VideoDecodingContext videoContext = null;
@@ -1026,7 +1020,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 // ... and initialize the helper data structures.
                 _videoFramePool = new ObjectPool<IntPtr>(decodingOptions.VideoPacketQueueSizeThreshold, AllocFrame, DeallocFrame);
                 _preparedVideoFrames = new SortedList<long, IntPtr>(decodingOptions.VideoPacketQueueSizeThreshold);
-                _videoCodecName = FFmpegHelper.PtrToStringNullEnded(codec->name, Encoding.UTF8);
+                _videoCodecName = FFmpegHelper.PtrToStringNullTerminated(codec->name, Encoding.UTF8);
 
                 IntPtr AllocFrame() {
                     return (IntPtr)ffmpeg.av_frame_alloc();
@@ -1052,7 +1046,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
                 // ... and prepare the buffer frame.
                 _audioFrame = ffmpeg.av_frame_alloc();
-                _audioCodecName = FFmpegHelper.PtrToStringNullEnded(codec->name, Encoding.UTF8);
+                _audioCodecName = FFmpegHelper.PtrToStringNullTerminated(codec->name, Encoding.UTF8);
             }
 
             // 9. Finally, set up other objects.
@@ -1076,6 +1070,68 @@ namespace MonoGame.Extended.VideoPlayback {
             _audioContext = audioContext;
 
             _isInitialized = true;
+        }
+
+        private void ResetBeforeSeek() {
+            var videoPackets = _videoPackets;
+
+            if (videoPackets != null) {
+                while (videoPackets.Count > 0) {
+                    var packet = videoPackets.Dequeue();
+
+                    ffmpeg.av_packet_unref(&packet.RawPacket);
+                }
+            }
+
+            var audioPackets = _audioPackets;
+
+            if (audioPackets != null) {
+                while (audioPackets.Count > 0) {
+                    var packet = audioPackets.Dequeue();
+
+                    ffmpeg.av_packet_unref(&packet.RawPacket);
+                }
+            }
+        }
+
+        private void ResetAfterSeek() {
+            _videoFramePool?.Reset();
+            _preparedVideoFrames?.Clear();
+
+            // Clear the staging data in buffer audio frame.
+            ffmpeg.av_frame_unref(_audioFrame);
+            // The point is the same. But since video frames are managed by a frame pool, we just need to set this to null.
+            _currentVideoFrame = null;
+
+            _audioPacketDecodingOngoing = false;
+
+            _isEndedTriggered = false;
+
+            _nextDecodingVideoTime = double.MinValue;
+        }
+
+        /// <summary>
+        /// A helper function to calculate seconds from PTS, considering looping.
+        /// </summary>
+        /// <param name="stream">The <see cref="AVStream"/> whose time base is going to be the calculation standard.</param>
+        /// <param name="pts">Value of the presentation timestamp.</param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private double PtsToSeconds([CanBeNull] AVStream* stream, long pts) {
+            if (stream == null) {
+                return 0;
+            }
+
+            var rawSeconds = FFmpegHelper.ConvertPtsToSeconds(stream, pts);
+            double result;
+
+            if (_currentLoopNumber > 0) {
+                result = rawSeconds + _currentLoopNumber * GetDurationInSeconds();
+            } else {
+                result = rawSeconds;
+            }
+
+            return result;
         }
 
         [CanBeNull]
@@ -1161,6 +1217,22 @@ namespace MonoGame.Extended.VideoPlayback {
         private int _userSelectedVideoStreamIndex = -1;
 
         private int _userSelectedAudioStreamIndex = -1;
+
+        [CanBeNull]
+        private double? _duration;
+
+        private bool _isLooped;
+
+        /// <summary>
+        /// Current loop number.
+        /// </summary>
+        /// <remarks>
+        /// For example, <code>0</code> is the first playback (not looped),
+        /// <code>1</code> is the first time the video is looped, etc.
+        /// This value will be used with packet PTS for playback time expansion,
+        /// i.e. expand some PTS in the N-th loop to <code>N * total_pts + pts</code>.
+        /// </remarks>
+        private int _currentLoopNumber;
 
         [NotNull]
         private readonly object _frameQueueUpdateLock = new object();

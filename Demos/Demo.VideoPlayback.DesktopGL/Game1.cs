@@ -83,6 +83,7 @@ namespace Demo.VideoPlayback.DesktopGL {
             _video = VideoHelper.LoadFromFile("Content/SampleVideo_1280x720_1mb.mp4");
 #endif
 
+            _videoPlayer.IsLooped = true;
             _videoPlayer.Play(_video);
         }
 

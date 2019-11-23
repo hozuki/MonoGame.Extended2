@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Media;
 using MonoGame.Extended.VideoPlayback;
+using ThreadState = System.Threading.ThreadState;
 
 // ReSharper disable once CheckNamespace
 namespace MonoGame.Extended.Framework.Media {
@@ -93,19 +96,23 @@ namespace MonoGame.Extended.Framework.Media {
 
                                 if (decodeContext != null) {
                                     // 2018-01-30:
-                                    // Seems like we should decode and push video data first, rather than video data first.
+                                    // Seems like we should decode and push audio data first, rather than video data first.
                                     // The former way produces less lag.
                                     decodeContext.LockFrameQueuesUpdate();
 
-                                    var soundEffect = _videoPlayer._soundEffectInstance;
+                                    Debug.WriteLine($"Presentation time: {presentationTime.ToString(CultureInfo.InvariantCulture)}");
 
-                                    if (soundEffect != null) {
-                                        decodeContext.ReadAudioUntilPlaybackIsAfter(soundEffect, presentationTime);
+                                    try {
+                                        var soundEffect = videoPlayer._soundEffectInstance;
+
+                                        if (soundEffect != null) {
+                                            decodeContext.ReadAudioUntilPlaybackIsAfter(soundEffect, presentationTime);
+                                        }
+
+                                        decodeContext.ReadVideoUntilPlaybackIsAfter(presentationTime);
+                                    } finally {
+                                        decodeContext.UnlockFrameQueueUpdate();
                                     }
-
-                                    decodeContext.ReadVideoUntilPlaybackIsAfter(presentationTime);
-
-                                    decodeContext.UnlockFrameQueueUpdate();
                                 }
 
                                 break;

@@ -181,6 +181,7 @@ namespace MonoGame.Extended.VideoPlayback {
             _dealloc = null;
         }
 
+        [NotNull]
         private readonly Dictionary<T, bool> _allocatedObjects;
         private readonly int _collectThreshold;
 

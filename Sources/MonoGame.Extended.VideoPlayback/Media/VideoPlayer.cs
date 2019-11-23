@@ -64,6 +64,12 @@ namespace MonoGame.Extended.Framework.Media {
             set {
                 EnsureNotDisposed();
 
+                var decodeContext = Video?.DecodeContext;
+
+                if (decodeContext != null) {
+                    decodeContext.IsLooped = value;
+                }
+
                 _isLooped = value;
             }
         }
@@ -143,7 +149,7 @@ namespace MonoGame.Extended.Framework.Media {
 
                         var playingTime = PlayPosition;
 
-                        if (playingTime >= video.Duration) {
+                        if (playingTime >= video.Duration && !IsLooped) {
                             _stopwatch.Stop();
                             _state = MediaState.Stopped;
 
@@ -275,12 +281,6 @@ namespace MonoGame.Extended.Framework.Media {
         /// Stops playback.
         /// </summary>
         public void Stop() {
-            var video = Video;
-
-            if (video != null) {
-                video.Ended -= video_Ended;
-            }
-
             // Set the state first because the decoding thread will detect this value.
             State = MediaState.Stopped;
 
@@ -355,7 +355,6 @@ namespace MonoGame.Extended.Framework.Media {
             var originalVideo = Video;
 
             if (originalVideo != null) {
-                originalVideo.Ended -= video_Ended;
                 Stop();
             }
 
@@ -365,9 +364,11 @@ namespace MonoGame.Extended.Framework.Media {
             Video = video;
 
             if (video != null) {
-                video.Ended += video_Ended;
-
                 video.InitializeDecodeContext();
+
+                Debug.Assert(video.DecodeContext != null);
+
+                video.DecodeContext.IsLooped = IsLooped;
 
                 _textureBuffer = new RenderTarget2D(_graphicsDevice, video.Width, video.Height, false,
                     SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
@@ -426,12 +427,6 @@ namespace MonoGame.Extended.Framework.Media {
             }
         }
 
-        private void video_Ended(object sender, EventArgs e) {
-            if (IsLooped) {
-                Replay();
-            }
-        }
-
         private TimeSpan GetPlayPosition(bool testAndSetState) {
             var video = Video;
 
@@ -440,6 +435,10 @@ namespace MonoGame.Extended.Framework.Media {
             }
 
             var elapsed = _stopwatch.Elapsed + _soughtTime;
+
+            if (IsLooped) {
+                return elapsed;
+            }
 
             if (elapsed >= video.Duration) {
                 if (testAndSetState) {

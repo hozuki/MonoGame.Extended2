@@ -37,7 +37,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         var ffmpegDirectory = Path.Combine(current, probe);
 
                         if (Directory.Exists(ffmpegDirectory)) {
-                            Debug.Print("FFmpeg binaries search path is set to: {0}", ffmpegDirectory);
+                            Debug.WriteLine($"FFmpeg binaries search path is set to: {ffmpegDirectory}");
 
                             RegisterLibrariesSearchPath(ffmpegDirectory);
 
@@ -64,7 +64,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 ffmpeg.av_register_all();
 
                 var ver = ffmpeg.av_version_info();
-                Debug.Print("Using FFmpeg version {0}", ver);
+                Debug.WriteLine($"Using FFmpeg version {ver}");
             }
         }
 
@@ -72,23 +72,40 @@ namespace MonoGame.Extended.VideoPlayback {
             switch (Environment.OSVersion.Platform) {
                 case PlatformID.Win32NT:
                 case PlatformID.Win32S:
-                case PlatformID.Win32Windows:
+                case PlatformID.Win32Windows: {
+                    // Try to use AddDllDirectory first; require Windows 7+ and KB2533623.
                     SetDllDirectory(path);
+
                     break;
+                }
                 case PlatformID.Unix:
-                case PlatformID.MacOSX:
+                case PlatformID.MacOSX: {
                     var currentValue = Environment.GetEnvironmentVariable(LD_LIBRARY_PATH);
                     if (!string.IsNullOrWhiteSpace(currentValue) && !currentValue.Contains(path)) {
-                        var newValue = currentValue + Path.PathSeparator + path;
+                        var newValue = $"{currentValue}{Path.PathSeparator.ToString()}{path}";
                         Environment.SetEnvironmentVariable(LD_LIBRARY_PATH, newValue);
                     }
 
                     break;
+                }
+                default: {
+                    Trace.WriteLine("Unsupported platform for setting search path.");
+
+                    break;
+                }
             }
         }
 
-        [DllImport("kernel32", SetLastError = true)]
+        [DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool SetDllDirectory(string lpPathName);
+
+        [DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = true)]
+        private static extern IntPtr AddDllDirectory(string lpNewDirectory);
+
+        [DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, PreserveSig = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool RemoveDllDirectory(IntPtr cookie);
 
         // ReSharper disable once InconsistentNaming
         private const string LD_LIBRARY_PATH = "LD_LIBRARY_PATH";

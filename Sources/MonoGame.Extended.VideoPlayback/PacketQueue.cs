@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using FFmpeg.AutoGen;
+using JetBrains.Annotations;
 
 namespace MonoGame.Extended.VideoPlayback {
     /// <inheritdoc />
     /// <summary>
-    /// A simple packet queue for <see cref="AVPacket"/>s.
+    /// A simple packet queue for <see cref="Packet"/>s.
     /// The packet order satisfies that: 1. the packet with smaller primary key stays in the front;
     /// 2. if two primary keys are equal, secondary keys apply; 3. otherwise, first-in-first-out (FIFO).
     /// </summary>
-    internal sealed class PacketQueue : IEnumerable<AVPacket> {
+    internal sealed class PacketQueue : IEnumerable<Packet> {
 
         /// <inheritdoc />
         /// <summary>
-        /// Creates a new <see cref="T:OpenMLTD.Projector.PacketQueue" /> instance using the default comparing method and default initial capacity.
+        /// Creates a new <see cref="PacketQueue" /> instance using the default comparing method and default initial capacity.
         /// </summary>
         internal PacketQueue()
             : this(DefaultComparison) {
@@ -26,7 +28,8 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="comparison">Comparing method.</param>
         internal PacketQueue(PacketQueueComparison comparison) {
             Comparison = comparison;
-            _list = new List<AVPacket>();
+            _list = new LinkedList<Packet>();
+            _comparer = CreateComparer(comparison);
         }
 
         /// <summary>
@@ -44,7 +47,8 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="capacity">Initial capacity.</param>
         internal PacketQueue(PacketQueueComparison comparison, int capacity) {
             Comparison = comparison;
-            _list = new List<AVPacket>(capacity);
+            _list = new LinkedList<Packet>();
+            _comparer = CreateComparer(comparison);
         }
 
         /// <summary>
@@ -52,7 +56,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         internal const PacketQueueComparison DefaultComparison = PacketQueueComparison.FirstDtsThenPts;
 
-        public IEnumerator<AVPacket> GetEnumerator() {
+        public IEnumerator<Packet> GetEnumerator() {
             return _list.GetEnumerator();
         }
 
@@ -63,153 +67,119 @@ namespace MonoGame.Extended.VideoPlayback {
         public override string ToString() {
             var baseString = base.ToString();
 
-            return $"{baseString} (Count = {Count})";
+            return $"{baseString} (Count = {Count.ToString()})";
         }
 
         /// <summary>
-        /// Enqueues an <see cref="AVPacket"/>.
+        /// Enqueues an <see cref="Packet"/>.
         /// </summary>
-        /// <param name="packet">The packet to enqueue.</param>
-        internal void Enqueue(AVPacket packet) {
+        /// <param name="packetToInsert">The packet to enqueue.</param>
+        internal void Enqueue(Packet packetToInsert) {
             var list = _list;
             var originalListCount = list.Count;
 
             // If there is nothing in the queue, then welcome our first guest!
             if (originalListCount == 0) {
-                list.Add(packet);
+                list.AddLast(packetToInsert);
 
                 return;
             }
 
-            Func<AVPacket, long> getKey1, getKey2;
-
-            switch (Comparison) {
-                case PacketQueueComparison.FirstDtsThenPts:
-                    getKey1 = GetDts;
-                    getKey2 = GetPts;
-                    break;
-                case PacketQueueComparison.FirstPtsThenDts:
-                    getKey1 = GetPts;
-                    getKey2 = GetDts;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            var packetKey1 = getKey1(packet);
-            var packetKey2 = getKey2(packet);
-
-            var lastPacket = list[0];
-            var lastPacketKey1 = getKey1(lastPacket);
-            var lastPacketKey2 = getKey2(lastPacket);
+            var comparer = _comparer;
+            var lastPacket = list.First.Value;
+            var compareResult = comparer.Compare(packetToInsert, lastPacket);
 
             // If there is only one packet in the queue, we only need to do one comparison.
             if (originalListCount == 1) {
-                if (packetKey1 > lastPacketKey1) {
-                    list.Add(packet);
-                } else if (packetKey1 < lastPacketKey1) {
-                    list.Insert(0, packet);
+                if (compareResult >= 0) {
+                    list.AddLast(packetToInsert);
                 } else {
-                    // Key #1s are equal, move on to key #2.
-                    if (packetKey2 >= lastPacketKey2) {
-                        list.Add(packet);
-                    } else {
-                        list.Insert(0, packet);
-                    }
+                    list.AddFirst(packetToInsert);
                 }
 
                 return;
             }
 
             // Handling boundary situation: the packet is "smaller" than the first packet in this queue.
-            if (packetKey1 < lastPacketKey1) {
-                list.Insert(0, packet);
+            if (compareResult < 0) {
+                list.AddFirst(packetToInsert);
 
                 return;
             }
 
-            // Index of the first packet in the list in which each packet has the same key #1 with its successor.
-            // If the list only contains one packet, this index equals to the index of that packet in the packet queue.
             // Video streams sometimes contain packets with the same PTS or DTS. That's why there is a "secondary key" and "list of same primary keys".
-            var sameKey1StartIndex = 0;
 
-            for (var i = 1; i < originalListCount; ++i) {
-                var currentPacket = list[i];
-                var currentPacketKey1 = getKey1(currentPacket);
+            for (var groupStartNode = list.First; groupStartNode != null;) {
+                var groupStartPacket = groupStartNode.Value;
 
-                // If we found a packet which is just "greater" than the packet we want to queue...
-                if (packetKey1 < currentPacketKey1) {
-                    // If `packet` is "greater" than the last packet we compared (last packet in the list of same key #1), we are feeling lucky.
-                    if (packetKey1 > lastPacketKey1) {
-                        list.Insert(i, packet);
-                    } else {
-                        // Otherwise, we have to scan through the list of same key #1 packets.
-                        // Here, condition is packet_key1 == lastPacket_key1.
+                var groupEndNode = groupStartNode;
+                var groupSize = 1;
 
-                        var sameKey1StartPacket = list[sameKey1StartIndex];
-                        var sameKey1StartPacketKey2 = getKey2(sameKey1StartPacket);
+                // Scan the whole group, mark its start and end.
+                while (groupEndNode.Next != null && comparer.AreInSameGroup(groupEndNode.Value, groupEndNode.Next.Value)) {
+                    groupEndNode = groupEndNode.Next;
+                    ++groupSize;
+                }
 
-                        // Again, we are feeling lucky...
-                        if (packetKey2 < sameKey1StartPacketKey2) {
-                            list.Insert(sameKey1StartIndex, packet);
-                        } else {
-                            var inserted = false;
+                // If the packet belongs to the group, find a place for it to insert.
+                // Possible locations: before the first item in the group; between two group items; after the whole group.
+                if (comparer.AreInSameGroup(packetToInsert, groupStartPacket)) {
+                    var currentNode = groupStartNode;
+                    var inserted = false;
 
-                            // ... or scan through and find two fit packets, insert between them.
-                            for (var j = sameKey1StartIndex; j < i - 1; ++j) {
-                                var tmpPacket1 = list[j];
-                                var tmpPacket2 = list[j + 1];
-                                var tmpPacket1Key2 = getKey2(tmpPacket1);
-                                var tmpPacket2Key2 = getKey2(tmpPacket2);
+                    for (var i = 0; i < groupSize; ++i) {
+                        compareResult = comparer.CompareInSameGroup(packetToInsert, currentNode.Value);
 
-                                if (tmpPacket1Key2 <= packetKey2 && packetKey2 < tmpPacket2Key2) {
-                                    list.Insert(j + 1, packet);
-                                    inserted = true;
+                        Debug.Assert(compareResult != 0);
 
-                                    break;
-                                }
-                            }
+                        if (compareResult < 0) {
+                            list.AddBefore(currentNode, packetToInsert);
+                            inserted = true;
 
-                            if (!inserted) {
-                                // Those attemps failed, append the packet to the list of same key #1 packets.
-                                list.Insert(i, packet);
-                            }
+                            break;
                         }
+
+                        currentNode = currentNode.Next;
+
+                        Debug.Assert(currentNode != null);
+                    }
+
+                    if (!inserted) {
+                        list.AddAfter(groupEndNode, packetToInsert);
                     }
 
                     return;
+                } else {
+                    // Otherwise it should fall before (smaller than) or after (larger than) the whole group.
+
+                    compareResult = comparer.Compare(packetToInsert, groupStartPacket);
+
+                    Debug.Assert(compareResult != 0);
+
+                    // If the item is smaller than the whole group, just insert it before the group start.
+                    if (compareResult < 0) {
+                        list.AddBefore(groupStartNode, packetToInsert);
+
+                        return;
+                    }
+
+                    // Otherwise, fall through and move to the next group.
                 }
 
-                // If we still didn't find the "a little greater" packet, update sameKey1StartIndex...
-                if (lastPacketKey1 != currentPacketKey1) {
-                    sameKey1StartIndex = i;
-                }
-
-                // ... and assign the last packet to the packet we just compared.
-                lastPacket = currentPacket;
-                lastPacketKey1 = getKey1(lastPacket);
+                groupStartNode = groupEndNode.Next;
             }
 
             // Handle boundary situation: the packet is "greater" than all packages in the queue.
-            list.Add(packet);
-
-            // Performance optimization: should use readonly structs if using C# 7.2 or later...
-            long GetDts(AVPacket pkt) {
-                return pkt.dts;
-            }
-
-            long GetPts(AVPacket pkt) {
-                return pkt.pts;
-            }
+            list.AddLast(packetToInsert);
         }
 
         /// <summary>
         /// Dequeues an <see cref="AVPacket"/> and returns it.
         /// </summary>
         /// <returns>The packet dequeued.</returns>
-        internal AVPacket Dequeue() {
-            var item = _list[0];
-            _list.RemoveAt(0);
+        internal Packet Dequeue() {
+            var item = _list.First.Value;
+            _list.RemoveFirst();
 
             return item;
         }
@@ -231,7 +201,22 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         internal PacketQueueComparison Comparison { get; }
 
-        private readonly List<AVPacket> _list;
+        private static PacketComparer CreateComparer(PacketQueueComparison comparison) {
+            switch (comparison) {
+                case PacketQueueComparison.FirstDtsThenPts:
+                    return PacketComparer.FirstDtsThenPts;
+                case PacketQueueComparison.FirstPtsThenDts:
+                    return PacketComparer.FirstPtsThenDts;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(comparison), comparison, null);
+            }
+        }
+
+        [NotNull]
+        private readonly LinkedList<Packet> _list;
+
+        [NotNull]
+        private readonly PacketComparer _comparer;
 
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -38,7 +37,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <summary>
         /// Required sample rate for <see cref="ffmpeg.swr_convert"/>, in Hz.
         /// It can be other frequencies, such as 22050, 32000, 48000, 96000, etc.
-        /// Considering that most of the devices support 44100 Hz output and the quality is reasonale, the sample rate is chosen as 44100 Hz.
+        /// Considering that most of the devices support 44100 Hz output and the quality is reasonable, the sample rate is chosen as 44100 Hz.
         /// </summary>
         internal const int RequiredSampleRate = 44100;
 
@@ -338,6 +337,7 @@ namespace MonoGame.Extended.VideoPlayback {
             // For more complicated situations: http://blog.csdn.net/dancing_night/article/details/45642107
             byte** dstData = null;
             var dstLineSize = 0;
+            const int planeCount = 1;
 
             try {
                 // Allocate channel array and sample buffers.
@@ -355,7 +355,9 @@ namespace MonoGame.Extended.VideoPlayback {
 
                 // If there is a delay, we have to adjust the buffers allocated. (Yeah actually one buffer.)
                 if (dstSampleCount > roughDstSampleCount) {
-                    ffmpeg.av_free(&dstData[0]);
+                    for (var i = 0; i < planeCount; ++i) {
+                        ffmpeg.av_freep(&dstData[i]);
+                    }
 
                     Verify(ffmpeg.av_samples_alloc(dstData, &dstLineSize, dstChannels, dstSampleCount, dstSampleFormat, 1));
                 }
@@ -373,26 +375,24 @@ namespace MonoGame.Extended.VideoPlayback {
                 // Get resampled data size...
                 var resampledDataSize = ffmpeg.av_samples_get_buffer_size(&dstLineSize, dstChannels, convertRet, dstSampleFormat, 1);
 
-                // ... allocates the buffer...
+                // ... allocate the buffer...
                 buffer = new byte[resampledDataSize];
 
-                // .. and write to it.
-                using (var dest = new MemoryStream(buffer, true)) {
-                    // TODO: sometimes dstData[0] is null?
-                    if (dstData[0] != null) {
-                        using (var src = new UnmanagedMemoryStream(dstData[0], resampledDataSize)) {
-                            src.CopyTo(dest);
-                        }
-                    }
+                // .. and write to it. 
+                // TODO: sometimes dstData[0] is null?
+                if (dstData[0] != null) {
+                    Marshal.Copy((IntPtr)dstData[0], buffer, 0, resampledDataSize);
                 }
             } finally {
                 // Finally, clean up the native buffers.
                 if (dstData != null) {
-                    if (dstData[0] != null) {
-                        ffmpeg.av_freep(&dstData[0]);
+                    for (var i = 0; i < planeCount; ++i) {
+                        if (dstData[i] != null) {
+                            ffmpeg.av_freep(&dstData[i]);
+                        }
                     }
 
-                    ffmpeg.av_freep(dstData);
+                    ffmpeg.av_freep(&dstData);
                 }
             }
 

@@ -68,19 +68,8 @@ namespace MonoGame.Extended.VideoPlayback {
         /// Releases an object.
         /// </summary>
         /// <param name="obj">The object to release. If this value is <see langword="null"/>, the method does nothing.</param>
-        internal void Release([CanBeNull] T obj) {
-            EnsureNotDisposed();
-
-            if (obj == null) {
-                return;
-            }
-
-            if (!_allocatedObjects.ContainsKey(obj)) {
-                throw new KeyNotFoundException();
-            }
-
-            _allocatedObjects[obj] = false;
-            --_objectsInUse;
+        internal bool Release([CanBeNull] T obj) {
+            return Release(obj, false);
         }
 
         /// <summary>
@@ -89,23 +78,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="obj">The object to destroy. If this value is <see langword="null"/>, the method does nothing.</param>
         /// <returns><see langword="true"/> if the object is found in the pool and successfully destroyed, otherwise <see langword="false"/>.</returns>
         internal bool Destroy([CanBeNull] T obj) {
-            EnsureNotDisposed();
-
-            if (obj == null) {
-                return false;
-            }
-
-            Debug.Assert(_dealloc != null, nameof(_dealloc) + " != null");
-
-            if (!_allocatedObjects.ContainsKey(obj)) {
-                return false;
-            }
-
-            _allocatedObjects.Remove(obj);
-            --_objectsInUse;
-            _dealloc(obj);
-
-            return true;
+            return Release(obj, true);
         }
 
         /// <summary>
@@ -181,14 +154,42 @@ namespace MonoGame.Extended.VideoPlayback {
             _dealloc = null;
         }
 
+        private bool Release([CanBeNull] T obj, bool deallocObject) {
+            EnsureNotDisposed();
+
+            if (obj == null) {
+                return false;
+            }
+
+            if (!_allocatedObjects.ContainsKey(obj)) {
+                return false;
+            }
+
+            --_objectsInUse;
+
+            if (deallocObject) {
+                _allocatedObjects.Remove(obj);
+
+                Debug.Assert(_dealloc != null, nameof(_dealloc) + " != null");
+
+                _dealloc(obj);
+            } else {
+                _allocatedObjects[obj] = false;
+            }
+
+            return true;
+        }
+
         [NotNull]
         private readonly Dictionary<T, bool> _allocatedObjects;
+
         private readonly int _collectThreshold;
 
         private int _objectsInUse;
 
         [CanBeNull]
         private Func<T> _alloc;
+
         [CanBeNull]
         private Action<T> _dealloc;
 

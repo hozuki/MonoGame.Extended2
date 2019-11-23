@@ -531,11 +531,11 @@ namespace MonoGame.Extended.VideoPlayback {
                         }
 
                         if (FFmpegHelper.TransmitAudioFrame(this, audioFrame, out var buffer)) {
-                            Trace.Assert(buffer != null);
+                            if (buffer != null) {
+                                memoryStream.Write(buffer, 0, buffer.Length);
 
-                            memoryStream.Write(buffer, 0, buffer.Length);
-
-                            dataPushed = true;
+                                dataPushed = true;
+                            }
                         }
                     }
                 }
@@ -687,102 +687,105 @@ namespace MonoGame.Extended.VideoPlayback {
 
             Debug.Assert(frameQueue != null && framePool != null);
 
-            var packet = new Packet(_currentLoopNumber);
+            Packet packet = null;
 
-            while (frameQueue.Count < count) {
-                var decodingSuccessful = false;
+            try {
+                packet = new Packet(_currentLoopNumber);
 
-                while (true) {
-                    ffmpeg.av_packet_unref(&packet.RawPacket);
+                while (frameQueue.Count < count) {
+                    var decodingSuccessful = false;
 
-                    if (!TryGetNextVideoPacket(out packet)) {
-                        break;
-                    }
+                    while (true) {
+                        packet.Dispose();
 
-                    if (packet.RawPacket.size == 0) {
-                        break;
-                    }
-
-                    var videoTime = PtsToSeconds(avStream, packet.RawPacket.pts + _videoStartPts);
-
-                    if (videoTime < 0) {
-                        break;
-                    }
-
-                    // About avcodec_send_packet and avcodec_receive_frame:
-                    // https://ffmpeg.org/doxygen/3.1/group__lavc__encdec.html
-
-                    // First we send a video packet.
-                    var error = ffmpeg.avcodec_send_packet(codecContext, &packet.RawPacket);
-
-                    if (error != 0) {
-                        if (error == ffmpeg.AVERROR_EOF) {
-                            // End of video, maybe some other buffered frames.
-                            error = ffmpeg.avcodec_send_packet(codecContext, null);
-
-                            if (error != 0) {
-                                if (error == ffmpeg.AVERROR_EOF) {
-                                    // Go on.
-                                } else {
-                                    FFmpegHelper.Verify(error, Dispose);
-                                }
-                            }
-                        } else {
-                            FFmpegHelper.Verify(error, Dispose);
+                        if (!TryGetNextVideoPacket(out packet)) {
+                            break;
                         }
-                    }
 
-                    var frame = (AVFrame*)framePool.Acquire();
+                        if (packet.RawPacket->size == 0) {
+                            break;
+                        }
 
-                    // Then we receive the decoded frame.
-                    error = ffmpeg.avcodec_receive_frame(codecContext, frame);
+                        var videoTime = PtsToSeconds(avStream, packet.RawPacket->pts + _videoStartPts);
 
-                    if (error == 0) {
-                        // If everything goes well, then again, lucky us.
-                        ffmpeg.av_packet_unref(&packet.RawPacket);
-                        frameQueue.Enqueue(frame->pts, (IntPtr)frame);
-                        decodingSuccessful = true;
+                        if (videoTime < 0) {
+                            break;
+                        }
 
-                        break;
-                    } else {
-                        // If this packet contains multiple frames, we have to enqueue all those frames.
-                        if (error == ffmpeg.EAGAIN) {
+                        // About avcodec_send_packet and avcodec_receive_frame:
+                        // https://ffmpeg.org/doxygen/3.1/group__lavc__encdec.html
+
+                        // First we send a video packet.
+                        var error = ffmpeg.avcodec_send_packet(codecContext, packet.RawPacket);
+
+                        if (error != 0) {
+                            if (error == ffmpeg.AVERROR_EOF) {
+                                // End of video, maybe some other buffered frames.
+                                error = ffmpeg.avcodec_send_packet(codecContext, null);
+
+                                if (error != 0) {
+                                    if (error == ffmpeg.AVERROR_EOF) {
+                                        // Go on.
+                                    } else {
+                                        FFmpegHelper.Verify(error, Dispose);
+                                    }
+                                }
+                            } else {
+                                FFmpegHelper.Verify(error, Dispose);
+                            }
+                        }
+
+                        var frame = (AVFrame*)framePool.Acquire();
+
+                        // Then we receive the decoded frame.
+                        error = ffmpeg.avcodec_receive_frame(codecContext, frame);
+
+                        if (error == 0) {
+                            // If everything goes well, then again, lucky us.
+                            packet.Dispose();
                             frameQueue.Enqueue(frame->pts, (IntPtr)frame);
                             decodingSuccessful = true;
-                        }
 
-                        while (error == ffmpeg.EAGAIN) {
-                            frame = (AVFrame*)framePool.Acquire();
-                            error = ffmpeg.avcodec_receive_frame(codecContext, frame);
-                            decodingSuccessful = true;
-
-                            if (error >= 0) {
+                            break;
+                        } else {
+                            // If this packet contains multiple frames, we have to enqueue all those frames.
+                            if (error == ffmpeg.EAGAIN) {
                                 frameQueue.Enqueue(frame->pts, (IntPtr)frame);
+                                decodingSuccessful = true;
+                            }
+
+                            while (error == ffmpeg.EAGAIN) {
+                                frame = (AVFrame*)framePool.Acquire();
+                                error = ffmpeg.avcodec_receive_frame(codecContext, frame);
+                                decodingSuccessful = true;
+
+                                if (error >= 0) {
+                                    frameQueue.Enqueue(frame->pts, (IntPtr)frame);
+                                }
+                            }
+
+                            // If an error occurs, release the frame we acquired because its data will not be used by now.
+                            if (error < 0) {
+                                framePool.Release((IntPtr)frame);
+                            }
+
+                            if (error == ffmpeg.AVERROR_EOF) {
+                                // Go on.
+                            } else if (error == -11) {
+                                // Device not ready; don't know why this happens.
+                            } else {
+                                FFmpegHelper.Verify(error, Dispose);
                             }
                         }
+                    }
 
-                        // If an error occurs, release the frame we acquired because its data will not be used by now.
-                        if (error < 0) {
-                            framePool.Release((IntPtr)frame);
-                        }
-
-                        if (error == ffmpeg.AVERROR_EOF) {
-                            // Go on.
-                        } else if (error == -11) {
-                            // Device not ready; don't know why this happens.
-                        } else {
-                            FFmpegHelper.Verify(error, Dispose);
-                        }
+                    if (!decodingSuccessful) {
+                        break;
                     }
                 }
-
-                if (!decodingSuccessful) {
-                    break;
-                }
+            } finally {
+                packet?.Dispose();
             }
-
-            // Clean up.
-            ffmpeg.av_packet_unref(&packet.RawPacket);
 
             return frameQueue.Count > 0;
         }
@@ -818,69 +821,73 @@ namespace MonoGame.Extended.VideoPlayback {
                 }
             }
 
-            var packet = new Packet(_currentLoopNumber);
+            Packet packet = null;
 
-            // Other logics are similar to those in TryFetchVideoFrames.
+            try {
+                packet = new Packet(_currentLoopNumber);
 
-            while (true) {
-                ffmpeg.av_packet_unref(&packet.RawPacket);
+                // Other logics are similar to those in TryFetchVideoFrames.
 
-                if (!TryGetNextAudioPacket(out packet)) {
-                    break;
-                }
+                while (true) {
+                    packet.Dispose();
 
-                if (packet.RawPacket.size == 0) {
-                    break;
-                }
+                    if (!TryGetNextAudioPacket(out packet)) {
+                        break;
+                    }
 
-                var audioTime = PtsToSeconds(avStream, packet.RawPacket.pts + _audioStartPts);
+                    if (packet.RawPacket->size == 0) {
+                        break;
+                    }
 
-                if (audioTime < 0) {
-                    break;
-                }
+                    var audioTime = PtsToSeconds(avStream, packet.RawPacket->pts + _audioStartPts);
 
-                var error = ffmpeg.avcodec_send_packet(codecContext, &packet.RawPacket);
+                    if (audioTime < 0) {
+                        break;
+                    }
 
-                if (error != 0) {
-                    if (error == ffmpeg.AVERROR_EOF) {
-                        // End of video, maybe some other buffered frames.
-                        error = ffmpeg.avcodec_send_packet(codecContext, null);
+                    var error = ffmpeg.avcodec_send_packet(codecContext, packet.RawPacket);
 
-                        if (error != 0) {
-                            if (error == ffmpeg.AVERROR_EOF) {
-                                // Go on.
-                            } else if (error == ffmpeg.EAGAIN) {
-                                continue;
-                            } else {
-                                FFmpegHelper.Verify(error, Dispose);
+                    if (error != 0) {
+                        if (error == ffmpeg.AVERROR_EOF) {
+                            // End of video, maybe some other buffered frames.
+                            error = ffmpeg.avcodec_send_packet(codecContext, null);
+
+                            if (error != 0) {
+                                if (error == ffmpeg.AVERROR_EOF) {
+                                    // Go on.
+                                } else if (error == ffmpeg.EAGAIN) {
+                                    continue;
+                                } else {
+                                    FFmpegHelper.Verify(error, Dispose);
+                                }
                             }
+                        } else if (error == ffmpeg.EAGAIN) {
+                            continue;
+                        } else {
+                            FFmpegHelper.Verify(error, Dispose);
                         }
+                    }
+
+                    error = ffmpeg.avcodec_receive_frame(codecContext, frame);
+
+                    if (error == 0) {
+                        packet.Dispose();
+
+                        // The packet received is fully consumed.
+                        _audioPacketDecodingOngoing = true;
+
+                        return true;
+                    } else if (error == ffmpeg.AVERROR_EOF) {
+                        break;
                     } else if (error == ffmpeg.EAGAIN) {
-                        continue;
+                        // Go on.
                     } else {
                         FFmpegHelper.Verify(error, Dispose);
                     }
                 }
-
-                error = ffmpeg.avcodec_receive_frame(codecContext, frame);
-
-                if (error == 0) {
-                    ffmpeg.av_packet_unref(&packet.RawPacket);
-
-                    // The packet received is fully consumed.
-                    _audioPacketDecodingOngoing = true;
-
-                    return true;
-                } else if (error == ffmpeg.AVERROR_EOF) {
-                    break;
-                } else if (error == ffmpeg.EAGAIN) {
-                    // Go on.
-                } else {
-                    FFmpegHelper.Verify(error, Dispose);
-                }
+            } finally {
+                packet?.Dispose();
             }
-
-            ffmpeg.av_packet_unref(&packet.RawPacket);
 
             return false;
         }
@@ -899,7 +906,7 @@ namespace MonoGame.Extended.VideoPlayback {
             var packet = new Packet(_currentLoopNumber);
 
             // Read the next packet from current format container.
-            var error = ffmpeg.av_read_frame(FormatContext, &packet.RawPacket);
+            var error = ffmpeg.av_read_frame(FormatContext, packet.RawPacket);
 
             if (error < 0) {
                 if (error == ffmpeg.AVERROR_EOF) {
@@ -910,25 +917,25 @@ namespace MonoGame.Extended.VideoPlayback {
             }
 
             // Is this an empty packet?
-            if (!(packet.RawPacket.data != null && packet.RawPacket.size > 0)) {
-                ffmpeg.av_packet_unref(&packet.RawPacket);
+            if (!(packet.RawPacket->data != null && packet.RawPacket->size > 0)) {
+                packet.Dispose();
 
                 return false;
             }
 
-            if (packet.RawPacket.stream_index == VideoStreamIndex) {
+            if (packet.RawPacket->stream_index == VideoStreamIndex) {
                 // If this packet belongs to the video stream, enqueue it to the video packet queue.
                 Debug.Assert(_videoPackets != null);
 
                 _videoPackets.Enqueue(packet);
-            } else if (packet.RawPacket.stream_index == AudioStreamIndex) {
+            } else if (packet.RawPacket->stream_index == AudioStreamIndex) {
                 // If this packet belongs to the audio stream, enqueue it to the audio packet queue.
                 Debug.Assert(_audioPackets != null);
 
                 _audioPackets.Enqueue(packet);
             } else {
                 // Otherwise, ignore this packet.
-                ffmpeg.av_packet_unref(&packet.RawPacket);
+                packet.Dispose();
             }
 
             return true;
@@ -1079,7 +1086,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 while (videoPackets.Count > 0) {
                     var packet = videoPackets.Dequeue();
 
-                    ffmpeg.av_packet_unref(&packet.RawPacket);
+                    packet.Dispose();
                 }
             }
 
@@ -1089,7 +1096,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 while (audioPackets.Count > 0) {
                     var packet = audioPackets.Dequeue();
 
-                    ffmpeg.av_packet_unref(&packet.RawPacket);
+                    packet.Dispose();
                 }
             }
         }
@@ -1099,6 +1106,7 @@ namespace MonoGame.Extended.VideoPlayback {
             _preparedVideoFrames?.Clear();
 
             // Clear the staging data in buffer audio frame.
+            // Do NOT free the audio frame here.
             ffmpeg.av_frame_unref(_audioFrame);
             // The point is the same. But since video frames are managed by a frame pool, we just need to set this to null.
             _currentVideoFrame = null;

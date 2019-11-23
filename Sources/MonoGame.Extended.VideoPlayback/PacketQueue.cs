@@ -71,10 +71,10 @@ namespace MonoGame.Extended.VideoPlayback {
         }
 
         /// <summary>
-        /// Enqueues an <see cref="Packet"/>.
+        /// Enqueues a <see cref="Packet"/>.
         /// </summary>
         /// <param name="packetToInsert">The packet to enqueue.</param>
-        internal void Enqueue(Packet packetToInsert) {
+        internal void Enqueue([NotNull] Packet packetToInsert) {
             var list = _list;
             var originalListCount = list.Count;
 
@@ -174,11 +174,19 @@ namespace MonoGame.Extended.VideoPlayback {
         }
 
         /// <summary>
-        /// Dequeues an <see cref="AVPacket"/> and returns it.
+        /// Dequeues a <see cref="Packet"/> and returns it.
         /// </summary>
         /// <returns>The packet dequeued.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the packet queue is empty.</exception>
+        [NotNull]
         internal Packet Dequeue() {
-            var item = _list.First.Value;
+            var firstNode = _list.First;
+
+            if (firstNode == null) {
+                throw new InvalidOperationException("The packet queue is empty.");
+            }
+
+            var item = firstNode.Value;
             _list.RemoveFirst();
 
             return item;

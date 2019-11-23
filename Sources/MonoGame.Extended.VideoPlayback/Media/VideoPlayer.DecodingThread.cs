@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Globalization;
 using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Media;
@@ -65,13 +64,26 @@ namespace MonoGame.Extended.Framework.Media {
             /// <summary>
             /// The underlying <see cref="Thread"/>.
             /// </summary>
+            [NotNull]
             internal Thread SystemThread { get; }
 
             /// <summary>
             /// Returns <see langword="null"/> if the thread is still running, <see langword="true"/> if the thread exited abnormally,
             /// and <see langword="false"/> if the thread exited normally.
             /// </summary>
+            [CanBeNull]
             internal bool? ExceptionalExit => _exceptionalExit;
+
+#if DEBUG
+            /// <summary>
+            /// When the thread surprisingly exited, retrieves the cause.
+            /// </summary>
+            [CanBeNull]
+            internal Exception ExitCause {
+                [DebuggerStepThrough]
+                get => _exitCause;
+            }
+#endif
 
             /// <summary>
             /// Worker thread procedure.
@@ -100,8 +112,6 @@ namespace MonoGame.Extended.Framework.Media {
                                     // The former way produces less lag.
                                     decodeContext.LockFrameQueuesUpdate();
 
-                                    Debug.WriteLine($"Presentation time: {presentationTime.ToString(CultureInfo.InvariantCulture)}");
-
                                     try {
                                         var soundEffect = videoPlayer._soundEffectInstance;
 
@@ -128,6 +138,7 @@ namespace MonoGame.Extended.Framework.Media {
                     _exceptionalExit = false;
                 } catch (Exception ex) {
                     _exceptionalExit = true;
+                    _exitCause = ex;
 
                     // Here is a trick to raise an exception from a worker thread with a correct stack trace.
                     // First, the exception must be raised in the main thread, otherwise the application crashes immediately.
@@ -143,6 +154,11 @@ namespace MonoGame.Extended.Framework.Media {
 
             [CanBeNull]
             private bool? _exceptionalExit;
+
+#if DEBUG
+            [CanBeNull]
+            private Exception _exitCause;
+#endif
 
             [NotNull]
             private readonly SynchronizationContext _mainThreadSynchronizationContext;

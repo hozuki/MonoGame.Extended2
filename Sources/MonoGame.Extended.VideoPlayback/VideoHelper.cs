@@ -36,7 +36,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="url">The URL of the video source.</param>
         /// <returns>Loaded video.</returns>
         public static Video LoadFromUrl([NotNull] string url) {
-            return LoadFromFile(url, DecodingOptions.Default);
+            return LoadFromUrl(url, DecodingOptions.Default);
         }
 
         /// <summary>

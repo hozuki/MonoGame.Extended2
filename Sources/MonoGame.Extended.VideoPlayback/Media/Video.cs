@@ -147,6 +147,17 @@ namespace MonoGame.Extended.Framework.Media {
         internal DecodeContext DecodeContext => _decodeContext;
 
         /// <summary>
+        /// Current <see cref="VideoPlayer"/> which is using this <see cref="Video"/>.
+        /// </summary>
+        [CanBeNull]
+        internal VideoPlayer CurrentVideoPlayer {
+            [DebuggerStepThrough]
+            get;
+            [DebuggerStepThrough]
+            set;
+        }
+
+        /// <summary>
         /// Forces initializing the <see cref="T:DecodeContext"/>.
         /// </summary>
         internal void InitializeDecodeContext() {

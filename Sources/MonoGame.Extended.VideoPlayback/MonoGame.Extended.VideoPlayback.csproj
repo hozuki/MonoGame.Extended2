@@ -70,6 +70,7 @@
     <Compile Include="GameHelper.cs" />
     <Compile Include="Media\ISubtitleRenderer.cs" />
     <Compile Include="Media\SubtitleRenderer.cs" />
+    <Compile Include="Media\VideoPlayer.DynamicSoundEffectInstanceAccess.cs" />
     <Compile Include="ObjectPool`1.cs" />
     <Compile Include="Packet.cs" />
     <Compile Include="PacketComparer.cs" />
@@ -80,7 +81,7 @@
     <Compile Include="VideoDecoding\VideoDecodingContext.cs" />
     <Compile Include="Media\VideoPlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Media\VideoPlayer.DecodingThread.cs" />
+    <Compile Include="Media\DecodingThread.cs" />
     <Compile Include="DecodingOptions.cs" />
     <Compile Include="VideoHelper.cs" />
     <Compile Include="VideoPlayerOptions.cs" />

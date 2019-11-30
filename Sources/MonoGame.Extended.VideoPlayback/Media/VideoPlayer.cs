@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -88,11 +90,15 @@ namespace MonoGame.Extended.Framework.Media {
 
                 _isMuted = value;
 
-                if (_soundEffectInstance != null) {
-                    if (value) {
-                        _soundEffectInstance.Volume = 0;
-                    } else {
-                        _soundEffectInstance.Volume = _originalVolume;
+                using (var seAccess = AccessSoundEffect()) {
+                    var se = seAccess.SoundEffect;
+
+                    if (se != null) {
+                        if (value) {
+                            se.Volume = 0;
+                        } else {
+                            se.Volume = _originalVolume;
+                        }
                     }
                 }
             }
@@ -170,7 +176,27 @@ namespace MonoGame.Extended.Framework.Media {
         public Video Video {
             // No disposing protection
             get => _video;
-            private set => _video = value;
+            private set {
+                ref var oldVideo = ref _video;
+
+                if (oldVideo == value) {
+                    return;
+                }
+
+                if (oldVideo != null) {
+                    oldVideo.CurrentVideoPlayer = null;
+                }
+
+                if (value != null) {
+                    if (value.CurrentVideoPlayer != null) {
+                        throw new InvalidOperationException(nameof(Video) + " can only be used by one " + nameof(VideoPlayer) + " at a time.");
+                    }
+
+                    value.CurrentVideoPlayer = this;
+                }
+
+                oldVideo = value;
+            }
         }
 
         /// <summary>
@@ -180,7 +206,9 @@ namespace MonoGame.Extended.Framework.Media {
             get {
                 EnsureNotDisposed();
 
-                return _soundEffectInstance?.Volume ?? 0;
+                using (var seAccess = AccessSoundEffect()) {
+                    return seAccess.SoundEffect?.Volume ?? 0;
+                }
             }
             set {
                 EnsureNotDisposed();
@@ -189,8 +217,12 @@ namespace MonoGame.Extended.Framework.Media {
                 _originalVolume = value;
 
                 if (!IsMuted) {
-                    if (_soundEffectInstance != null) {
-                        _soundEffectInstance.Volume = value;
+                    using (var seAccess = AccessSoundEffect()) {
+                        var se = seAccess.SoundEffect;
+
+                        if (se != null) {
+                            se.Volume = value;
+                        }
                     }
                 }
             }
@@ -241,7 +273,10 @@ namespace MonoGame.Extended.Framework.Media {
                 State = MediaState.Paused;
 
                 _stopwatch.Stop();
-                _soundEffectInstance?.Pause();
+
+                using (var seAccess = AccessSoundEffect()) {
+                    seAccess.SoundEffect?.Pause();
+                }
             }
         }
 
@@ -273,7 +308,10 @@ namespace MonoGame.Extended.Framework.Media {
                 State = MediaState.Playing;
 
                 _stopwatch.Start();
-                _soundEffectInstance?.Play();
+
+                using (var seAccess = AccessSoundEffect()) {
+                    seAccess.SoundEffect?.Play();
+                }
             }
         }
 
@@ -287,7 +325,9 @@ namespace MonoGame.Extended.Framework.Media {
             _decodingThread?.Terminate();
             _decodingThread = null;
 
-            _soundEffectInstance?.Stop();
+            using (var seAccess = AccessSoundEffect()) {
+                seAccess.SoundEffect?.Stop();
+            }
 
             _stopwatch.Reset();
 
@@ -337,11 +377,25 @@ namespace MonoGame.Extended.Framework.Media {
         /// <seealso cref="FFmpegHelper.RequiredPixelFormat"/>
         public const SurfaceFormat RequiredSurfaceFormat = SurfaceFormat.Color;
 
+        /// <summary>
+        /// Creates a new <see cref="DynamicSoundEffectInstanceAccess"/> on <see langword="this"/>.
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal DynamicSoundEffectInstanceAccess AccessSoundEffect() {
+            return new DynamicSoundEffectInstanceAccess(this);
+        }
+
         protected override void Dispose(bool disposing) {
             Stop();
 
-            _soundEffectInstance?.Dispose();
-            _soundEffectInstance = null;
+            // Cannot use DynamicSoundEffectInstanceAccess.
+            lock (_soundEffectInstanceLock) {
+                ref var se = ref _soundEffectInstance;
+
+                se?.Dispose();
+                se = null;
+            }
 
             _textureBuffer?.Dispose();
             _textureBuffer = null;
@@ -452,6 +506,10 @@ namespace MonoGame.Extended.Framework.Media {
         }
 
         private void ResetAndPlayVideoFromStart([CanBeNull] Video video) {
+            ref var decodingThread = ref _decodingThread;
+
+            decodingThread?.Terminate();
+
             _soughtTime = TimeSpan.Zero;
 
             if (video == null) {
@@ -464,24 +522,32 @@ namespace MonoGame.Extended.Framework.Media {
                 subtitleRenderer.Dimensions = new Point(video.Width, video.Height);
             }
 
-            Trace.Assert(_soundEffectInstance != null, nameof(_soundEffectInstance) + " != null");
-
             // Reset states so that this method also fits restarting playback.
             video.DecodeContext?.Reset();
-            _soundEffectInstance.Stop();
-            _soundEffectInstance.Dispose();
-            _soundEffectInstance = new DynamicSoundEffectInstance(FFmpegHelper.RequiredSampleRate, FFmpegHelper.RequiredChannelsXna);
 
-            _decodingThread = new DecodingThread(this, _playerOptions);
+            // Since we have to update _soundEffectInstance here, we cannot use the lock wrapper (DynamicSoundEffectInstanceAccess).
+            lock (_soundEffectInstanceLock) {
+                ref var se = ref _soundEffectInstance;
 
-            State = MediaState.Playing;
+                Debug.Assert(se != null, nameof(se) + " != null");
 
-            _stopwatch.Stop();
-            _stopwatch.Reset();
-            _stopwatch.Start();
+                se.Stop();
+                se.Dispose();
+                se = new DynamicSoundEffectInstance(FFmpegHelper.RequiredSampleRate, FFmpegHelper.RequiredChannelsXna);
 
-            _decodingThread.Start();
-            _soundEffectInstance.Play();
+                decodingThread = new DecodingThread(this, _playerOptions);
+
+                State = MediaState.Playing;
+
+                var stopwatch = _stopwatch;
+
+                stopwatch.Stop();
+                stopwatch.Reset();
+                stopwatch.Start();
+
+                decodingThread.Start();
+                se.Play();
+            }
         }
 
         private readonly GraphicsDevice _graphicsDevice;
@@ -508,6 +574,9 @@ namespace MonoGame.Extended.Framework.Media {
 
         [CanBeNull]
         private DynamicSoundEffectInstance _soundEffectInstance;
+
+        [NotNull]
+        private readonly object _soundEffectInstanceLock = new object();
 
         [NotNull]
         private readonly VideoPlayerOptions _playerOptions;

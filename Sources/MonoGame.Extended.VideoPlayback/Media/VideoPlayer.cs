@@ -322,12 +322,12 @@ namespace MonoGame.Extended.Framework.Media {
             // Set the state first because the decoding thread will detect this value.
             State = MediaState.Stopped;
 
-            _decodingThread?.Terminate();
-            _decodingThread = null;
-
             using (var seAccess = AccessSoundEffect()) {
                 seAccess.SoundEffect?.Stop();
             }
+            
+            _decodingThread?.Terminate();
+            _decodingThread = null;
 
             _stopwatch.Reset();
 

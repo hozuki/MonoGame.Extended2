@@ -497,7 +497,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 var fetchFramesPlease = true;
 
                 {
-                    var pts = audioFrame->pts;
+                    var pts = ffmpeg.av_frame_get_best_effort_timestamp(audioFrame);
                     var framePresentationTime = PtsToSeconds(audioStream, pts + _audioStartPts);
 
                     if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
@@ -523,7 +523,7 @@ namespace MonoGame.Extended.VideoPlayback {
                             continue;
                         }
 
-                        var pts = audioFrame->pts;
+                        var pts = ffmpeg.av_frame_get_best_effort_timestamp(audioFrame);
                         var framePresentationTime = PtsToSeconds(audioStream, pts + _audioStartPts);
 
                         if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
@@ -670,9 +670,9 @@ namespace MonoGame.Extended.VideoPlayback {
         }
 
         /// <summary>
-        /// Tries to decode and fetch some video frames, and store them in the videoframe queue.
+        /// Tries to decode and fetch some video frames, and store them in the video frame queue.
         /// </summary>
-        /// <param name="count">Expected count.</param>
+        /// <param name="count">Expected count of the frame queue, after fetching video frames.</param>
         /// <returns><see langword="true"/> if the video frame queue has at least one frame when the function returns, otherwise <see langword="false"/>.</returns>
         private bool TryFetchVideoFrames(int count) {
             EnsureNotDisposed();
@@ -740,17 +740,29 @@ namespace MonoGame.Extended.VideoPlayback {
                         // Then we receive the decoded frame.
                         error = ffmpeg.avcodec_receive_frame(codecContext, frame);
 
+                        var bestEffortPts = ffmpeg.av_frame_get_best_effort_timestamp(frame);
+
                         if (error == 0) {
                             // If everything goes well, then again, lucky us.
                             packet.Dispose();
-                            frameQueue.Enqueue(frame->pts, (IntPtr)frame);
+
+                            // Fix duplicate key (why does this happen?)
+                            if (frameQueue.ContainsKey(bestEffortPts)) {
+                                // Drop the old frame and put it back to the pool.
+                                frameQueue.TryGetValue(bestEffortPts, out var oldFramePtr);
+                                frameQueue.Remove(bestEffortPts);
+                                framePool.Release(oldFramePtr);
+                            }
+
+                            frameQueue.Enqueue(bestEffortPts, (IntPtr)frame);
+
                             decodingSuccessful = true;
 
                             break;
                         } else {
                             // If this packet contains multiple frames, we have to enqueue all those frames.
                             if (error == ffmpeg.EAGAIN) {
-                                frameQueue.Enqueue(frame->pts, (IntPtr)frame);
+                                frameQueue.Enqueue(bestEffortPts, (IntPtr)frame);
                                 decodingSuccessful = true;
                             }
 
@@ -760,7 +772,7 @@ namespace MonoGame.Extended.VideoPlayback {
                                 decodingSuccessful = true;
 
                                 if (error >= 0) {
-                                    frameQueue.Enqueue(frame->pts, (IntPtr)frame);
+                                    frameQueue.Enqueue(bestEffortPts, (IntPtr)frame);
                                 }
                             }
 

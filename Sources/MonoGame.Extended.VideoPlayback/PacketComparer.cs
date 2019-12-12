@@ -43,12 +43,13 @@ namespace MonoGame.Extended.VideoPlayback {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareInSameGroup([NotNull] Packet x, [NotNull] Packet y) {
+            Debug.Assert(AreInSameGroup(x, y), "Packets to compare are not in the same group");
             return GetKey2(x).CompareTo(GetKey2(y));
         }
 
-        internal abstract long GetKey1(Packet packet);
+        protected abstract long GetKey1(Packet packet);
 
-        internal abstract long GetKey2(Packet packet);
+        protected abstract long GetKey2(Packet packet);
 
         [NotNull]
         public static readonly PacketComparer FirstDtsThenPts;
@@ -58,11 +59,11 @@ namespace MonoGame.Extended.VideoPlayback {
 
         private sealed class DtsThenPts : PacketComparer {
 
-            internal override unsafe long GetKey1(Packet packet) {
+            protected override unsafe long GetKey1(Packet packet) {
                 return packet.RawPacket->dts;
             }
 
-            internal override unsafe long GetKey2(Packet packet) {
+            protected override unsafe long GetKey2(Packet packet) {
                 return packet.RawPacket->pts;
             }
 
@@ -70,11 +71,11 @@ namespace MonoGame.Extended.VideoPlayback {
 
         private sealed class PtsThenDts : PacketComparer {
 
-            internal override unsafe long GetKey1(Packet packet) {
+            protected override unsafe long GetKey1(Packet packet) {
                 return packet.RawPacket->pts;
             }
 
-            internal override unsafe long GetKey2(Packet packet) {
+            protected override unsafe long GetKey2(Packet packet) {
                 return packet.RawPacket->dts;
             }
 

@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
 namespace MonoGame.Extended.VideoPlayback {
@@ -11,6 +13,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// Gets the running <see cref="Game"/> instance. It depends on the property name and lifecycle of <see cref="Game"/>.
         /// </summary>
         /// <returns>The game instance.</returns>
+        [CanBeNull]
         internal static Game GetCurrentGame() {
             if (_gameInstanceProperty == null) {
                 var t = typeof(Game);
@@ -29,6 +32,7 @@ namespace MonoGame.Extended.VideoPlayback {
             return instance;
         }
 
+        [CanBeNull]
         private static PropertyInfo _gameInstanceProperty;
 
     }

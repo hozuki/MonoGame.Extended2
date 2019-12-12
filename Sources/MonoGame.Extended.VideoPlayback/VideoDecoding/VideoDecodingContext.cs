@@ -49,6 +49,7 @@ namespace MonoGame.Extended.VideoPlayback.VideoDecoding {
         /// <param name="width">Output width, in pixels.</param>
         /// <param name="height">Output height, in pixels.</param>
         /// <returns>Cached or created rescale context.</returns>
+        [NotNull]
         internal SwsContext* GetSuitableScaleContext(int width, int height) {
             EnsureNotDisposed();
 
@@ -80,6 +81,8 @@ namespace MonoGame.Extended.VideoPlayback.VideoDecoding {
 
                 _scaleContext = scaleContext;
             }
+
+            Trace.Assert(_scaleContext != null, nameof(_scaleContext) + " != null");
 
             return _scaleContext;
         }
@@ -135,13 +138,19 @@ namespace MonoGame.Extended.VideoPlayback.VideoDecoding {
             _videoStream = null;
         }
 
+        [CanBeNull]
         private AVCodecContext* _codecContext;
+
+        [CanBeNull]
         private AVStream* _videoStream;
 
         private int _lastScaledWidth = -1;
         private int _lastScaledHeight = -1;
+
+        [CanBeNull]
         private SwsContext* _scaleContext;
 
+        [NotNull]
         private readonly DecodingOptions _decodingOptions;
 
     }

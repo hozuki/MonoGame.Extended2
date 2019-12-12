@@ -44,7 +44,7 @@ namespace MonoGame.Extended.VideoPlayback {
         /// Creates a new <see cref="PacketQueue"/> instance using the specified comparing method and initial capacity.
         /// </summary>
         /// <param name="comparison">Comparing method.</param>
-        /// <param name="capacity">Initial capacity.</param>
+        /// <param name="capacity">Initial capacity. Not used.</param>
         internal PacketQueue(PacketQueueComparison comparison, int capacity) {
             Comparison = comparison;
             _list = new LinkedList<Packet>();
@@ -220,7 +220,7 @@ namespace MonoGame.Extended.VideoPlayback {
             }
         }
 
-        [NotNull]
+        [NotNull, ItemNotNull]
         private readonly LinkedList<Packet> _list;
 
         [NotNull]

@@ -23,7 +23,7 @@ namespace MonoGame.Extended.Framework.Media {
         /// </summary>
         [Obsolete(@"This constructor requires doing reflection hack on private properties of Game class. The value may subject to changes. Avoid using it if possible.")]
         public VideoPlayer()
-            : this(GameHelper.GetCurrentGame().GraphicsDevice) {
+            : this(GetCurrentGraphicsDevice()) {
         }
 
         /// <inheritdoc />
@@ -48,7 +48,6 @@ namespace MonoGame.Extended.Framework.Media {
             _soundEffectInstance = new DynamicSoundEffectInstance(FFmpegHelper.RequiredSampleRate, FFmpegHelper.RequiredChannelsXna);
         }
 
-        // TODO: Implement real looping.
         /// <summary>
         /// Sets whether video playbacks are looped.
         /// </summary>
@@ -248,6 +247,10 @@ namespace MonoGame.Extended.Framework.Media {
 
             Debug.Assert(texture != null, nameof(texture) + " != null");
 
+            if (texture.IsDisposed) {
+                throw new ObjectDisposedException(nameof(texture), "Texture cache is disposed");
+            }
+
             var r = GetTexture(texture);
 
             if (!r) {
@@ -325,7 +328,7 @@ namespace MonoGame.Extended.Framework.Media {
             using (var seAccess = AccessSoundEffect()) {
                 seAccess.SoundEffect?.Stop();
             }
-            
+
             _decodingThread?.Terminate();
             _decodingThread = null;
 
@@ -550,6 +553,22 @@ namespace MonoGame.Extended.Framework.Media {
             }
         }
 
+        [NotNull]
+        private static GraphicsDevice GetCurrentGraphicsDevice() {
+            var game = GameHelper.GetCurrentGame();
+
+            if (game == null) {
+                throw new NullReferenceException("Current game is null");
+            }
+
+            var graphicsDevice = game.GraphicsDevice;
+
+            Trace.Assert(graphicsDevice != null, nameof(graphicsDevice) + " != null");
+
+            return graphicsDevice;
+        }
+
+        [NotNull]
         private readonly GraphicsDevice _graphicsDevice;
 
         [CanBeNull]

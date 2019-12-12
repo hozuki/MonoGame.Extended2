@@ -1,4 +1,6 @@
-﻿namespace MonoGame.Extended.VideoPlayback {
+﻿using JetBrains.Annotations;
+
+namespace MonoGame.Extended.VideoPlayback {
     /// <summary>
     /// Options for <see cref="Framework.Media.VideoPlayer"/>.
     /// </summary>
@@ -27,11 +29,12 @@
         /// <summary>
         /// Default video player options.
         /// </summary>
+        [NotNull]
         public static readonly VideoPlayerOptions Default
             = new VideoPlayerOptions(
                 5, // If we want a 60 fps display (~16.67 ms/frame), sleeping for ~5 ms is OK. If you suffer from a low frame rate, decrease this value.
                 15
-                );
+            );
 
     }
 }

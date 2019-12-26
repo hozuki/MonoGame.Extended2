@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 
 namespace MonoGame.Extended.VideoPlayback {
@@ -17,11 +18,24 @@ namespace MonoGame.Extended.VideoPlayback {
         /// <param name="collectThreshold">Threshold when calling <see cref="Collect"/>.</param>
         /// <param name="alloc">Allocation function.</param>
         /// <param name="dealloc">Deallocation function.</param>
-        internal ObjectPool(int collectThreshold, [NotNull] Func<T> alloc, [NotNull] Action<T> dealloc) {
-            _allocatedObjects = new Dictionary<T, bool>();
+        internal ObjectPool(int collectThreshold, [NotNull] Func<T> alloc, [NotNull] Action<T> dealloc)
+            : this(collectThreshold, alloc, dealloc, null) {
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ObjectPool{T}"/> instance.
+        /// </summary>
+        /// <param name="collectThreshold">Threshold when calling <see cref="Collect"/>.</param>
+        /// <param name="alloc">Allocation function.</param>
+        /// <param name="dealloc">Deallocation function.</param>
+        /// <param name="reset">Object reset function.</param>
+        internal ObjectPool(int collectThreshold, [NotNull] Func<T> alloc, [NotNull] Action<T> dealloc, [CanBeNull] RefAction<T> reset) {
+            _objectsInUse = new HashSet<T>();
+            _freeObjects = new LinkedList<T>();
             _collectThreshold = collectThreshold;
             _alloc = alloc;
             _dealloc = dealloc;
+            _reset = reset;
         }
 
         /// <summary>
@@ -31,20 +45,22 @@ namespace MonoGame.Extended.VideoPlayback {
         internal T Acquire() {
             EnsureNotDisposed();
 
-            if (ObjectsInUse == Count) {
+            if (NumberOfObjectsInUse == Count) {
                 return Alloc();
             }
 
-            foreach (var kv in _allocatedObjects) {
-                if (!kv.Value) {
-                    _allocatedObjects[kv.Key] = true;
-                    ++_objectsInUse;
-
-                    return kv.Key;
-                }
+            if (_freeObjects.Count == 0) {
+                throw new ApplicationException("This should not happen");
             }
 
-            throw new ApplicationException("This should not have happened.");
+            // Move the object from free list to using list
+            var firstNode = _freeObjects.First;
+            _freeObjects.RemoveFirst();
+
+            var obj = firstNode.Value;
+            _objectsInUse.Add(obj);
+
+            return obj;
         }
 
         /// <summary>
@@ -54,12 +70,13 @@ namespace MonoGame.Extended.VideoPlayback {
         internal T Alloc() {
             EnsureNotDisposed();
 
-            Debug.Assert(_alloc != null, nameof(_alloc) + " != null");
+            var alloc = _alloc;
 
-            var obj = _alloc();
+            Debug.Assert(alloc != null, nameof(alloc) + " != null");
 
-            _allocatedObjects[obj] = true;
-            ++_objectsInUse;
+            var obj = alloc();
+
+            _objectsInUse.Add(obj);
 
             return obj;
         }
@@ -92,30 +109,24 @@ namespace MonoGame.Extended.VideoPlayback {
 
             Debug.Assert(dealloc != null, nameof(dealloc) + " != null");
 
-            if (_allocatedObjects.Count <= _collectThreshold) {
+            if (NumberOfObjectsInUse <= _collectThreshold) {
+                // No need to collect.
                 return;
             }
 
-            var freeObjects = new List<T>();
-
-            foreach (var kv in _allocatedObjects) {
-                if (!kv.Value) {
-                    freeObjects.Add(kv.Key);
-                }
+            if (_freeObjects.Count == 0) {
+                // Nothing to collect.
+                return;
             }
 
-            if (freeObjects.Count > 0) {
-                var arr = freeObjects.ToArray();
+            // Create a temporary storage and perform deallocation on it.
+            var freeObjects = new List<T>(_freeObjects);
+            _freeObjects.Clear();
 
-                for (var i = 0; i < arr.Length; ++i) {
-                    var obj = arr[i];
+            var objects = freeObjects.ToArray();
 
-                    dealloc(obj);
-
-                    _allocatedObjects.Remove(arr[i]);
-                }
-
-                _objectsInUse -= arr.Length;
+            foreach (var obj in objects) {
+                dealloc(obj);
             }
         }
 
@@ -127,71 +138,92 @@ namespace MonoGame.Extended.VideoPlayback {
 
             Debug.Assert(dealloc != null, nameof(dealloc) + " != null");
 
-            foreach (var kv in _allocatedObjects) {
-                var obj = kv.Key;
-
+            foreach (var obj in _objectsInUse) {
                 dealloc(obj);
             }
 
-            _allocatedObjects.Clear();
-            _objectsInUse = 0;
+            foreach (var obj in _freeObjects) {
+                dealloc(obj);
+            }
+
+            _objectsInUse.Clear();
+            _freeObjects.Clear();
         }
 
         /// <summary>
         /// Number of objects in this pool.
         /// </summary>
-        internal int Count => _allocatedObjects.Count;
+        internal int Count {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [DebuggerStepThrough]
+            get => _objectsInUse.Count + _freeObjects.Count;
+        }
 
         /// <summary>
         /// Number of objects in use.
         /// </summary>
-        internal int ObjectsInUse => _objectsInUse;
+        internal int NumberOfObjectsInUse {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [DebuggerStepThrough]
+            get => _objectsInUse.Count;
+        }
 
         protected override void Dispose(bool disposing) {
             Reset();
 
             _alloc = null;
             _dealloc = null;
+            _reset = null;
         }
 
         private bool Release([CanBeNull] T obj, bool deallocObject) {
             EnsureNotDisposed();
 
-            if (obj == null) {
+            if (ReferenceEquals(obj, null)) {
                 return false;
             }
 
-            if (!_allocatedObjects.ContainsKey(obj)) {
+            if (!_objectsInUse.Contains(obj)) {
                 return false;
             }
-
-            --_objectsInUse;
 
             if (deallocObject) {
-                _allocatedObjects.Remove(obj);
+                // Remove the object from using list
+                _objectsInUse.Remove(obj);
 
-                Debug.Assert(_dealloc != null, nameof(_dealloc) + " != null");
+                var dealloc = _dealloc;
 
-                _dealloc(obj);
+                Debug.Assert(dealloc != null, nameof(dealloc) + " != null");
+
+                dealloc(obj);
             } else {
-                _allocatedObjects[obj] = false;
+                // Move the object from using list to free list
+                _objectsInUse.Remove(obj);
+
+                _reset?.Invoke(ref obj);
+
+                _freeObjects.AddLast(obj);
             }
 
             return true;
         }
 
-        [NotNull]
-        private readonly Dictionary<T, bool> _allocatedObjects;
+        [NotNull, ItemNotNull]
+        private readonly HashSet<T> _objectsInUse;
+
+        [NotNull, ItemNotNull]
+        private readonly LinkedList<T> _freeObjects;
 
         private readonly int _collectThreshold;
-
-        private int _objectsInUse;
 
         [CanBeNull]
         private Func<T> _alloc;
 
         [CanBeNull]
         private Action<T> _dealloc;
+
+        [CanBeNull]
+        private RefAction<T> _reset;
 
     }
 }

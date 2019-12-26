@@ -46,6 +46,7 @@
     <Compile Include="DisposableBase.cs" />
     <Compile Include="Guard.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RefAction`1.cs" />
     <Compile Include="ReflectionHelper.cs" />
   </ItemGroup>
   <ItemGroup>

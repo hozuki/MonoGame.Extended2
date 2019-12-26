@@ -122,12 +122,33 @@ namespace MonoGame.Extended.Framework.Media {
                     return;
                 }
 
-                if (TimeSpan.Zero >= value || value >= video.Duration) {
-                    Stop();
+                bool willSeek;
+                var videoDuration = video.Duration;
+
+                if (TimeSpan.Zero > value || value >= videoDuration) {
+                    if (IsLooped) {
+                        willSeek = true;
+
+                        var seconds = value.TotalSeconds % videoDuration.TotalSeconds;
+
+                        if (seconds < 0) {
+                            seconds += videoDuration.TotalSeconds;
+                        }
+
+                        value = TimeSpan.FromSeconds(seconds);
+                    } else {
+                        willSeek = false;
+                    }
                 } else {
+                    willSeek = true;
+                }
+
+                if (willSeek) {
                     _stopwatch.Restart();
                     _soughtTime = value;
                     video.DecodeContext?.Seek(value.TotalSeconds);
+                } else {
+                    Stop();
                 }
             }
         }
@@ -238,17 +259,19 @@ namespace MonoGame.Extended.Framework.Media {
             EnsureNotDisposed();
 
             var video = Video;
-
-            if (video == null) {
-                throw new InvalidOperationException("A video should be loaded to get texture.");
-            }
-
             var texture = _textureBuffer;
 
             Debug.Assert(texture != null, nameof(texture) + " != null");
 
             if (texture.IsDisposed) {
                 throw new ObjectDisposedException(nameof(texture), "Texture cache is disposed");
+            }
+
+            if (video == null) {
+                // Clear and return cached image
+                ClearTexture(texture);
+
+                return texture;
             }
 
             var r = GetTexture(texture);
@@ -313,7 +336,8 @@ namespace MonoGame.Extended.Framework.Media {
                 _stopwatch.Start();
 
                 using (var seAccess = AccessSoundEffect()) {
-                    seAccess.SoundEffect?.Play();
+                    var se = seAccess.SoundEffect;
+                    se?.Play();
                 }
             }
         }
@@ -466,15 +490,11 @@ namespace MonoGame.Extended.Framework.Media {
                     var subtitleRenderer = SubtitleRenderer;
 
                     if (subtitleRenderer != null) {
-                        var targets = _graphicsDevice.GetRenderTargets();
-
-                        _graphicsDevice.SetRenderTarget(_textureBuffer);
-
                         if (subtitleRenderer.Enabled) {
-                            subtitleRenderer.Render(now, texture);
+                            using (RenderTargetSwitcher.SwitchTo(_graphicsDevice, texture)) {
+                                subtitleRenderer.Render(now, texture);
+                            }
                         }
-
-                        _graphicsDevice.SetRenderTargets(targets);
                     }
                 }
 
@@ -566,6 +586,13 @@ namespace MonoGame.Extended.Framework.Media {
             Trace.Assert(graphicsDevice != null, nameof(graphicsDevice) + " != null");
 
             return graphicsDevice;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ClearTexture([NotNull] RenderTarget2D texture) {
+            using (RenderTargetSwitcher.SwitchTo(_graphicsDevice, texture)) {
+                _graphicsDevice.Clear(Color.Transparent);
+            }
         }
 
         [NotNull]

@@ -77,6 +77,7 @@
     <Compile Include="PacketQueue.cs" />
     <Compile Include="Media\Video.cs" />
     <Compile Include="PacketQueueComparison.cs" />
+    <Compile Include="RenderTargetSwitcher.cs" />
     <Compile Include="VideoDecoding\FrameScalingMethod.cs" />
     <Compile Include="VideoDecoding\VideoDecodingContext.cs" />
     <Compile Include="Media\VideoPlayer.cs" />

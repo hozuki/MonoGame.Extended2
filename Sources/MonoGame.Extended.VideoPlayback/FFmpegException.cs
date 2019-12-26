@@ -41,5 +41,22 @@ namespace MonoGame.Extended.VideoPlayback {
         /// </summary>
         public int AvError { get; }
 
+        /// <summary>
+        /// Gets FFmpeg error description.
+        /// </summary>
+        [NotNull]
+        public string AvErrorDescription {
+            get {
+                if (_avErrorDescription == null) {
+                    _avErrorDescription = FFmpegHelper.GetErrorString(AvError);
+                }
+
+                return _avErrorDescription;
+            }
+        }
+
+        [CanBeNull]
+        private string _avErrorDescription;
+
     }
 }

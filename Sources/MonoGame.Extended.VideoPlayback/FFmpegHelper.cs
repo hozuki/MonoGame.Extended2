@@ -71,6 +71,21 @@ namespace MonoGame.Extended.VideoPlayback {
 
             cleanupProc?.Invoke();
 
+            var errorString = GetErrorString(avError);
+
+            throw new FFmpegException(errorString, avError);
+        }
+
+        /// <summary>
+        /// Gets error description from FFmpeg error number.
+        /// </summary>
+        /// <param name="avError">FFmpeg error number.</param>
+        /// <returns>String description of the error. If the error number represents success, the returned string is empty.</returns>
+        internal static string GetErrorString(int avError) {
+            if (avError >= 0) {
+                return string.Empty;
+            }
+
             const ulong bufferSize = 1024;
 
             var errorBuffer = new byte[bufferSize];
@@ -87,7 +102,7 @@ namespace MonoGame.Extended.VideoPlayback {
 
             var errorString = Encoding.UTF8.GetString(errorBuffer, 0, tailIndex);
 
-            throw new FFmpegException(errorString, avError);
+            return errorString;
         }
 
         /// <summary>

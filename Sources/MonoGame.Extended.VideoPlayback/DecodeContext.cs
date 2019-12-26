@@ -545,6 +545,7 @@ namespace MonoGame.Extended.VideoPlayback {
                     var audioData = memoryStream.ToArray();
 
                     // ... send the data to OpenAL's audio buffer...
+                    // TODO: XAudio2 0x88960001?
                     sound.SubmitBuffer(audioData);
 
                     // ... and play it.

@@ -100,6 +100,7 @@ namespace MonoGame.Extended.VideoPlayback.AudioDecoding {
             if (resampleContext == null || sampleFormat != _lastSampleFormat || channels != _lastChannels || sampleRate != _lastSampleRate) {
                 if (resampleContext != null) {
                     ffmpeg.swr_close(resampleContext);
+                    ffmpeg.swr_free(&resampleContext);
                     _resampleContext = null;
                 }
 

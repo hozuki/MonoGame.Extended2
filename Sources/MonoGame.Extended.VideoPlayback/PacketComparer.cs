@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using MonoGame.Extended.VideoPlayback.Extensions;
 
 namespace MonoGame.Extended.VideoPlayback {
     internal abstract class PacketComparer : IComparer<Packet> {
@@ -63,16 +64,16 @@ namespace MonoGame.Extended.VideoPlayback {
                 return packet.RawPacket->dts;
             }
 
-            protected override unsafe long GetKey2(Packet packet) {
-                return packet.RawPacket->pts;
+            protected override long GetKey2(Packet packet) {
+                return packet.GetRobustTimestamp();
             }
 
         }
 
         private sealed class PtsThenDts : PacketComparer {
 
-            protected override unsafe long GetKey1(Packet packet) {
-                return packet.RawPacket->pts;
+            protected override long GetKey1(Packet packet) {
+                return packet.GetRobustTimestamp();
             }
 
             protected override unsafe long GetKey2(Packet packet) {

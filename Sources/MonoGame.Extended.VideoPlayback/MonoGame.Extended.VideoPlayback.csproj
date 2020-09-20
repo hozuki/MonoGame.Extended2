@@ -40,8 +40,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FFmpeg.AutoGen, Version=3.4.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\FFmpeg.AutoGen.3.4.0.1\lib\net45\FFmpeg.AutoGen.dll</HintPath>
+    <Reference Include="FFmpeg.AutoGen, Version=4.2.2.2, Culture=neutral, PublicKeyToken=9b7632533a381715">
+      <HintPath>..\..\packages\FFmpeg.AutoGen.4.2.2.2\lib\net45\FFmpeg.AutoGen.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="JetBrains.Annotations, Version=11.1.0.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325">
       <HintPath>..\..\packages\JetBrains.Annotations.11.1.0\lib\net20\JetBrains.Annotations.dll</HintPath>
@@ -63,6 +64,7 @@
   <ItemGroup>
     <Compile Include="AudioDecoding\AudioDecodingContext.cs" />
     <Compile Include="DecodeContext.cs" />
+    <Compile Include="Extensions\PacketExtensions.cs" />
     <Compile Include="Extensions\SortedList`2Extensions.cs" />
     <Compile Include="FFmpegBinariesHelper.cs" />
     <Compile Include="FFmpegException.cs" />

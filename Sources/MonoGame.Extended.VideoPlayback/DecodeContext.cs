@@ -707,7 +707,7 @@ namespace MonoGame.Extended.VideoPlayback {
                             break;
                         }
 
-                        var videoTime = PtsToSeconds(avStream, packet.RawPacket->pts + _videoStartPts);
+                        var videoTime = PtsToSeconds(avStream, packet.GetRobustTimestamp() + _videoStartPts);
 
                         if (videoTime < 0) {
                             break;
@@ -852,7 +852,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         break;
                     }
 
-                    var audioTime = PtsToSeconds(avStream, packet.RawPacket->pts + _audioStartPts);
+                    var audioTime = PtsToSeconds(avStream, packet.GetRobustTimestamp() + _audioStartPts);
 
                     if (audioTime < 0) {
                         break;
@@ -975,8 +975,10 @@ namespace MonoGame.Extended.VideoPlayback {
             // 3. If we are opening an ASF container, we need a different stream start time calculation method.
             // About start_time and ASF container format (.asf, .wmv), see:
             // https://www.ffmpeg.org/doxygen/3.0/structAVStream.html#a7c67ae70632c91df8b0f721658ec5377
+            // This field is fixed in FFmpeg 4.0.
             var containerName = FFmpegHelper.PtrToStringNullTerminated(formatContext->iformat->name, Encoding.UTF8);
             var isAsfContainer = containerName == "asf";
+            var isAsfContainerStartTimeFixed = FFmpegBinariesHelper.IsFFmpegVersion4OrAbove();
 
             VideoDecodingContext videoContext = null;
             AudioDecodingContext audioContext = null;
@@ -997,13 +999,23 @@ namespace MonoGame.Extended.VideoPlayback {
                         _videoStreamIndex = i;
 
                         // ... and record its start time.
-                        if (!isAsfContainer) {
+                        if (isAsfContainerStartTimeFixed) {
                             if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
                                 _videoStartPts = avStream->start_time;
+                            } else {
+                                _videoStartPts = 0;
                             }
                         } else {
-                            // I don't know why but this hack works... at least on FFmpeg 3.4.
-                            _videoStartPts = avStream->cur_dts / 2;
+                            if (!isAsfContainer) {
+                                if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                                    _videoStartPts = avStream->start_time;
+                                } else {
+                                    _videoStartPts = 0;
+                                }
+                            } else {
+                                // I don't know why but this hack works... at least on FFmpeg 3.4.
+                                _videoStartPts = avStream->cur_dts / 2;
+                            }
                         }
                     }
                 } else if (audioContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {

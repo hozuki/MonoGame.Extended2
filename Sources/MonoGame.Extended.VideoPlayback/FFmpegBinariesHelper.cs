@@ -68,6 +68,14 @@ namespace MonoGame.Extended.VideoPlayback {
             }
         }
 
+        internal static bool IsFFmpegVersion4OrAbove() {
+            // libavformat version of FFmpeg 4.0
+            const int ffmpegVersion4AvformatVersion = 58;
+            var avformatVersion = ffmpeg.avformat_version();
+
+            return avformatVersion >= ffmpegVersion4AvformatVersion;
+        }
+
         private static void RegisterLibrariesSearchPath(string path) {
             switch (Environment.OSVersion.Platform) {
                 case PlatformID.Win32NT:

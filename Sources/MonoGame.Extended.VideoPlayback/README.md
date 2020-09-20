@@ -33,21 +33,21 @@ The techniques, such as video-audio synchronization and independent thread rende
 
 - [.NET Framework 4.5](https://www.microsoft.com/en-us/download/details.aspx?id=42642) or equivalent
 - MonoGame (≥ 3.6)
-- FFmpeg binaries (3.4)
+- FFmpeg binaries (4.2, though earlier versions may work with corresponding FFmpeg.AutoGen)
 
 Preparation:
 
 Create two directories `x86` and `x64` under the root directory. Place 32-bit binaries under `x86` directory, and 64-bit under `x64`.
-This library uses FFmpeg.AutoGen, linking against FFmpeg 3.4.x, so this is what you will have in each directory:
+This library uses FFmpeg.AutoGen, linking against FFmpeg 4.2.x, so this is what you will have in each directory:
 
-- avcodec-57.dll
-- avdevice-57.dll
-- avfilter-6.dll
-- avformat-57.dll
-- avutil-55.dll
-- postproc-54.dll
-- swresample-2.dll
-- swscale-4.dll
+- avcodec-58.dll
+- avdevice-58.dll
+- avfilter-7.dll
+- avformat-58.dll
+- avutil-56.dll
+- postproc-55.dll
+- swresample-3.dll
+- swscale-5.dll
 
 Directory structure:
 
@@ -55,12 +55,12 @@ Directory structure:
 App.exe
 MonoGame.Extended.VideoPlayback.dll
 x64/
-  avcodec-57.dll
-  avdevice-57.dll
+  avcodec-58.dll
+  avdevice-58.dll
   ...
 x86/
-  avcodec-57.dll
-  avdevice-57.dll
+  avcodec-58.dll
+  avdevice-58.dll
   ...
 ```
 

@@ -31,23 +31,23 @@ The techniques, such as video-audio synchronization and independent thread rende
 
 **Requirements**:
 
-- [.NET Framework 4.5](https://www.microsoft.com/en-us/download/details.aspx?id=42642) or equivalent
-- MonoGame (≥ 3.6)
-- FFmpeg binaries (4.2, though earlier versions may work with corresponding FFmpeg.AutoGen)
+- [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- MonoGame (≥ 3.8)
+- FFmpeg binaries (5.2, though earlier versions may work with corresponding FFmpeg.AutoGen)
 
 Preparation:
 
 Create two directories `x86` and `x64` under the root directory. Place 32-bit binaries under `x86` directory, and 64-bit under `x64`.
-This library uses FFmpeg.AutoGen, linking against FFmpeg 4.2.x, so this is what you will have in each directory:
+This library uses FFmpeg.AutoGen, linking against FFmpeg 5.2.x, so this is what you will have in each directory:
 
-- avcodec-58.dll
-- avdevice-58.dll
-- avfilter-7.dll
-- avformat-58.dll
-- avutil-56.dll
-- postproc-55.dll
-- swresample-3.dll
-- swscale-5.dll
+- avcodec-59.dll
+- avdevice-59.dll
+- avfilter-8.dll
+- avformat-59.dll
+- avutil-57.dll
+- postproc-56.dll
+- swresample-4.dll
+- swscale-6.dll
 
 Directory structure:
 
@@ -55,12 +55,12 @@ Directory structure:
 App.exe
 MonoGame.Extended.VideoPlayback.dll
 x64/
-  avcodec-58.dll
-  avdevice-58.dll
+  avcodec-59.dll
+  avdevice-59.dll
   ...
 x86/
-  avcodec-58.dll
-  avdevice-58.dll
+  avcodec-59.dll
+  avdevice-59.dll
   ...
 ```
 
@@ -94,7 +94,7 @@ protected override void LoadContent() {
     // You will receive a compiler warning about why not doing that.
 
     // videoPlayer = new VideoPlayer();
-    
+
     videoPlayer = new VideoPlayer(GraphicsDevice);
     video = VideoHelper.LoadFromFile("some_video.mp4");
 
@@ -139,8 +139,7 @@ The test video is downloaded from [sample-videos.com](http://www.sample-videos.c
 The library is written in pure C# so building it is a piece of cake.
 
 - To build MonoGame.Extended.VideoPlayback you just need to restore the dependencies, and then compile the project, via Visual Studio or MSBuild CLI.
-- To build Demo.VideoPlayback.\* you need to obtain Visual Studio and install [MonoGame SDK](http://www.monogame.net/2017/03/01/monogame-3-6/). Then you can compile and launch it in Visual Studio.
 
-The code is written in C# 7.0, therefore you need a C# 7.0-compatible compiler. If you are using Visual Studio, you should use Visual Studio 2017.
+The code is written in C# 7.0, therefore you need a C# 7.0-compatible compiler. If you are using Visual Studio, you should use Visual Studio 2022.
 
 The code is supplied with detailed comments and XML documentation. Hope these help to understand the logic behind the code.

@@ -15,8 +15,8 @@ With the extension methods, you can use a syntax similar to `spriteBatch.DrawStr
 
 **Requirements**:
 
-- [.NET Framework 4.5](https://www.microsoft.com/en-us/download/details.aspx?id=42642) or equivalent
-- MonoGame (≥ 3.6)
+- [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
+- MonoGame (≥ 3.8)
 - libfreetype
 
 `Game1.cs`:
@@ -52,8 +52,6 @@ protected override void Draw(GameTime gameTime) {
 
 ## Building
 
-You can simply build the library in Visual Studio. For the demo, you have to install MonoGame SDK first, then build it in Visual Studio.
-
-The code is written in C# 7.0, therefore you need a C# 7.0-compatible compiler. If you are using Visual Studio, you should use Visual Studio 2017.
+The code is written in C# 7.0, therefore you need a C# 7.0-compatible compiler. If you are using Visual Studio, you should use Visual Studio 2022.
 
 The code is supplied with detailed comments and XML documentation. Hope these help to understand the logic behind the code.

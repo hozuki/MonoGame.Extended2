@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using MonoGame.Extended.Framework.Media;
 using MonoGame.Extended.VideoPlayback;
+using Video = MonoGame.Extended.Framework.Media.Video;
+using VideoPlayer = MonoGame.Extended.Framework.Media.VideoPlayer;
 
 namespace Demo.VideoPlayback.DesktopGL {
     /// <summary>
@@ -80,7 +82,7 @@ namespace Demo.VideoPlayback.DesktopGL {
 
             _videoPlayer.SubtitleRenderer = subtitle;
 #else
-            _video = VideoHelper.LoadFromFile("Content/SampleVideo_1280x720_1mb.mp4");
+            _video = VideoHelper.LoadFromFile(@"C:\Users\MIC\Desktop\GameVideo\GameVideo\GameVideo\Content\Clip1.wmv");
 #endif
 
             _videoPlayer.IsLooped = true;

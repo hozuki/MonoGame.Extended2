@@ -13,9 +13,17 @@ namespace MonoGame.Extended.VideoPlayback.VideoDecoding {
         /// Creates a new <see cref="VideoDecodingContext"/> instance.
         /// </summary>
         /// <param name="videoStream">The video stream.</param>
+        /// <param name="formatContext">Format context.</param>
+        /// <param name="videoCodec">Video codec.</param>
         /// <param name="decodingOptions">Decoding options.</param>
-        internal VideoDecodingContext([NotNull] AVStream* videoStream, [NotNull] DecodingOptions decodingOptions) {
-            _codecContext = videoStream->codec;
+        internal VideoDecodingContext([NotNull] AVFormatContext* formatContext, AVCodec* videoCodec, [NotNull] AVStream* videoStream, [NotNull] DecodingOptions decodingOptions) {
+            // https://riptutorial.com/ffmpeg/example/30961/open-a-codec-context
+            var codecContext = ffmpeg.avcodec_alloc_context3(videoCodec);
+            Debug.Assert(codecContext != null, "codecContext != null");
+
+            FFmpegHelper.Verify(ffmpeg.avcodec_parameters_to_context(codecContext, videoStream->codecpar));
+
+            _codecContext = codecContext;
             _videoStream = videoStream;
             _decodingOptions = decodingOptions;
         }
@@ -126,6 +134,8 @@ namespace MonoGame.Extended.VideoPlayback.VideoDecoding {
         protected override void Dispose(bool disposing) {
             if (_codecContext != null) {
                 ffmpeg.avcodec_close(_codecContext);
+                var codecContext = _codecContext;
+                ffmpeg.avcodec_free_context(&codecContext);
                 _codecContext = null;
             }
 

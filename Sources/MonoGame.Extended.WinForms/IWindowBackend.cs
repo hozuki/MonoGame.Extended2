@@ -5,9 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 namespace MonoGame.Extended.WinForms {
     public interface IWindowBackend : IDisposable {
 
-        void Initialize([NotNull] GraphicsDeviceControl control);
+        void Initialize([NotNull] GraphicsDeviceControl control, PresentInterval presentInterval);
 
-        void PrepareDraw([NotNull] GraphicsDeviceControl control, [NotNull] PresentationParameters presentationParameters);
+        void PrepareDraw([NotNull] GraphicsDeviceControl control);
 
         void BeginDraw([NotNull] GraphicsDeviceControl control);
 

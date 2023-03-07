@@ -172,7 +172,7 @@ namespace MonoGame.Extended.WinForms {
             _graphicsDeviceService = new GraphicsDeviceService(this, Profile);
             _serviceContainer.AddService<IGraphicsDeviceService>(_graphicsDeviceService);
 
-            WindowBackend?.Initialize(this);
+            WindowBackend?.Initialize(this, _graphicsDeviceService.GraphicsDevice.PresentationParameters.PresentationInterval);
 
             ControlInitializing?.Invoke(this, EventArgs.Empty);
             OnInitialize();
@@ -236,7 +236,7 @@ namespace MonoGame.Extended.WinForms {
                 return DeviceResetError.Failed;
             }
 
-            WindowBackend?.PrepareDraw(this, graphicsDevice.PresentationParameters);
+            WindowBackend?.PrepareDraw(this);
 
             var viewport = new Viewport();
 

@@ -3,7 +3,8 @@
 
         Unknown = 0,
         Direct3D11 = 1,
-        OpenGL = 2
+        OpenGL = 2,
+        PlayStation4 = 3,
 
     }
 }

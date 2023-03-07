@@ -19,7 +19,7 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
         [CanBeNull]
         public SwapChainRenderTarget SwapChain => _chain;
 
-        public void Initialize(GraphicsDeviceControl control) {
+        public void Initialize(GraphicsDeviceControl control, PresentInterval presentInterval) {
             if (control.IsDesignMode) {
                 return;
             }
@@ -29,15 +29,19 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
             var width = Math.Max(clientSize.Width, 1);
             var height = Math.Max(clientSize.Height, 1);
 
-            _chain = new SwapChainRenderTarget(control.GraphicsDevice, control.Handle, width, height);
+            var mipMap = true;
+            var surfaceFormat = SurfaceFormat.Color;
+            var depthFormat = DepthFormat.Depth24Stencil8;
+            var preferredMultiSampleCount = 1;
+            var renderTargetUsage = RenderTargetUsage.PreserveContents;
+
+            _chain = new SwapChainRenderTarget(control.GraphicsDevice, control.Handle, width, height, mipMap, surfaceFormat, depthFormat, preferredMultiSampleCount, renderTargetUsage, presentInterval);
         }
 
-        public void PrepareDraw(GraphicsDeviceControl control, PresentationParameters presentationParameters) {
+        public void PrepareDraw(GraphicsDeviceControl control) {
             if (control.IsDesignMode) {
                 return;
             }
-
-            _presentationParameters = presentationParameters;
         }
 
         public void BeginDraw(GraphicsDeviceControl control) {
@@ -59,12 +63,7 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
                 throw new InvalidOperationException("A swap chain is not created for this backend.");
             }
 
-            if (_presentationParameters == null) {
-                throw new InvalidOperationException("The drawing process is not started. You should call PrepareDraw() and BeginDraw() first.");
-            }
-
             try {
-                _chain.PresentInterval = _presentationParameters.PresentationInterval;
                 _chain.Present();
             } catch (Exception ex) {
                 Debug.Print(ex.ToString());
@@ -101,8 +100,6 @@ namespace MonoGame.Extended.WinForms.WindowsDX {
             _chain = null;
         }
 
-        [CanBeNull]
-        private PresentationParameters _presentationParameters;
         [CanBeNull]
         private SwapChainRenderTarget _chain;
 

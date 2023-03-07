@@ -1,164 +1,31 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\packages\SharpFont.4.0.1\build\SharpFont.props" Condition="Exists('..\..\packages\SharpFont.4.0.1\build\SharpFont.props')" />
-  <Import Project="..\..\packages\SharpFont.Dependencies.2.6\build\SharpFont.Dependencies.props" Condition="Exists('..\..\packages\SharpFont.Dependencies.2.6\build\SharpFont.Dependencies.props')" />
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A4C3762F-B1D2-4D84-B814-4BBA2805DD0E}</ProjectGuid>
+    <TargetFramework>net6.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MonoGame.Extended.Drawing</RootNamespace>
-    <AssemblyName>MonoGame.Extended.Drawing</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>default</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="JetBrains.Annotations, Version=11.1.0.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\JetBrains.Annotations.11.1.0\lib\net20\JetBrains.Annotations.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\MonoGame.Framework.Portable.3.6.0.1625\lib\portable-net45+win8+wpa81\MonoGame.Framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SharpFont, Version=4.0.1.200, Culture=neutral, PublicKeyToken=48add4c483071cdf, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\SharpFont.4.0.1\lib\net45\SharpFont.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.ValueTuple.4.4.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ArcSegment.cs" />
-    <Compile Include="ArcSize.cs" />
-    <Compile Include="BezierSegment.cs" />
-    <Compile Include="BitmapBrush.cs" />
-    <Compile Include="BitmapBrushProperties.cs" />
-    <Compile Include="BitmapInterpolationMode.cs" />
-    <Compile Include="Brush.cs" />
-    <Compile Include="BrushProperties.cs" />
-    <Compile Include="CapStyle.cs" />
-    <Compile Include="CombineMode.cs" />
-    <Compile Include="DashStyle.cs" />
-    <Compile Include="DrawingContext.cs" />
-    <Compile Include="DrawingContextEffectResources.cs" />
-    <Compile Include="Effects\BrushEffect.cs" />
-    <Compile Include="Effects\EffectResource.cs" />
-    <Compile Include="Effects\EffectResource.EffectNames.cs" />
-    <Compile Include="Effects\EffectResource.ResourceMaps.cs" />
-    <Compile Include="Effects\GradientBrushEffect.cs" />
-    <Compile Include="Effects\LinearGradientBrushEffect.cs" />
-    <Compile Include="Effects\SolidColorBrushEffect.cs" />
-    <Compile Include="Ellipse.cs" />
-    <Compile Include="ExtendMode.cs" />
-    <Compile Include="Figure.cs" />
-    <Compile Include="FigureEnd.cs" />
-    <Compile Include="FillMode.cs" />
-    <Compile Include="Gamma.cs" />
-    <Compile Include="Geometries\EllipseGeometry.cs" />
-    <Compile Include="Geometries\LineGeometry.cs" />
-    <Compile Include="Geometries\PathGeometry.cs" />
-    <Compile Include="Geometries\RectangleGeometry.cs" />
-    <Compile Include="Geometries\RoundedRectangleGeometry.cs" />
-    <Compile Include="Geometry.cs" />
-    <Compile Include="GeometryElement.cs" />
-    <Compile Include="GeometryElementType.cs" />
-    <Compile Include="GeometryRelation.cs" />
-    <Compile Include="GeometrySimplificationOption.cs" />
-    <Compile Include="GeometrySink.cs" />
-    <Compile Include="GradientStop.cs" />
-    <Compile Include="GradientStopCollection.cs" />
-    <Compile Include="GraphicsBackend.cs" />
-    <Compile Include="ISink.cs" />
-    <Compile Include="LinearGradientBrush.cs" />
-    <Compile Include="LinearGradientBrushProperties.cs" />
-    <Compile Include="LineJoin.cs" />
-    <Compile Include="Framework\Matrix3x2.cs" />
-    <Compile Include="MathArcSegment.cs" />
-    <Compile Include="Mesh.cs" />
-    <Compile Include="Pen.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QuadraticBezierSegment.cs" />
-    <Compile Include="Framework\RectangleF.cs" />
-    <Compile Include="RadialGradientBrush.cs" />
-    <Compile Include="RadialGradientBrushProperties.cs" />
-    <Compile Include="RoundedRectangle.cs" />
-    <Compile Include="Sink.cs" />
-    <Compile Include="SinkOpener.cs" />
-    <Compile Include="SolidColorBrush.cs" />
-    <Compile Include="StrokeStyle.cs" />
-    <Compile Include="SweepDirection.cs" />
-    <Compile Include="TessellationSink.cs" />
-    <Compile Include="Triangle.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\thirdparty\AdaptiveSubdivision\src\Agg.AdaptiveSubdivision\Agg.AdaptiveSubdivision.csproj">
-      <Project>{143ca3bd-4cc8-42a9-9228-d9f630096a92}</Project>
-      <Name>Agg.AdaptiveSubdivision</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\thirdparty\LibTessDotNet\LibTessDotNet\LibTessDotNet.csproj">
-      <Project>{5ee39029-873a-45a0-9259-2198bf8729f4}</Project>
-      <Name>LibTessDotNet</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MonoGame.Extended.Text\MonoGame.Extended.Text.csproj">
-      <Project>{1a3f516a-f7b4-4307-baf0-63309d2e0a6d}</Project>
-      <Name>MonoGame.Extended.Text</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MonoGame.Extended2\MonoGame.Extended2.csproj">
-      <Project>{c7c3d9de-41a4-4c21-98fb-336ed38a99d5}</Project>
-      <Name>MonoGame.Extended2</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\..\thirdparty\AdaptiveSubdivision\src\Agg.AdaptiveSubdivision\Agg.AdaptiveSubdivision.csproj" />
+    <ProjectReference Include="..\MonoGame.Extended.Text\MonoGame.Extended.Text.csproj" />
+    <ProjectReference Include="..\MonoGame.Extended2\MonoGame.Extended2.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Effects\Resources\BitmapBrush.fx" />
     <EmbeddedResource Include="Effects\Resources\BitmapBrush.fx.dx11.mgfxo" />
     <EmbeddedResource Include="Effects\Resources\BitmapBrush.fx.ogl.mgfxo" />
-    <None Include="Effects\Resources\brush_def.fxh" />
-    <None Include="Effects\Resources\compile_effects.bat" />
-    <None Include="Effects\Resources\gradient_def.fxh" />
     <Content Include="Effects\Resources\LinearGradientBrush.fx" />
     <EmbeddedResource Include="Effects\Resources\LinearGradientBrush.fx.dx11.mgfxo" />
     <EmbeddedResource Include="Effects\Resources\LinearGradientBrush.fx.ogl.mgfxo" />
-    <None Include="Effects\Resources\monogame_header.fxh" />
     <EmbeddedResource Include="Effects\Resources\SolidColorBrush.fx.dx11.mgfxo" />
     <EmbeddedResource Include="Effects\Resources\SolidColorBrush.fx.ogl.mgfxo" />
     <Content Include="Effects\Resources\SolidColorBrush.fx" />
-    <None Include="packages.config" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\SharpFont.Dependencies.2.6\build\SharpFont.Dependencies.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\SharpFont.Dependencies.2.6\build\SharpFont.Dependencies.props'))" />
-    <Error Condition="!Exists('..\..\packages\SharpFont.4.0.1\build\SharpFont.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\SharpFont.4.0.1\build\SharpFont.props'))" />
-  </Target>
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
+    <PackageReference Include="LibTessDotNet" Version="1.1.15" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <PackageReference Include="SharpFont.NetStandard" Version="1.0.5" />
+  </ItemGroup>
 </Project>

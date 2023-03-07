@@ -13,9 +13,17 @@ namespace MonoGame.Extended.VideoPlayback.AudioDecoding {
         /// <summary>
         /// Creates a new <see cref="AudioDecodingContext"/> instance.
         /// </summary>
+        /// <param name="formatContext">Format context.</param>
+        /// <param name="audioCodec">Audio codec.</param>
         /// <param name="audioStream">The audio stream.</param>
-        internal AudioDecodingContext([NotNull] AVStream* audioStream) {
-            _codecContext = audioStream->codec;
+        internal AudioDecodingContext([NotNull] AVFormatContext* formatContext, AVCodec* audioCodec, [NotNull] AVStream* audioStream)  {
+            // https://riptutorial.com/ffmpeg/example/30961/open-a-codec-context
+            var codecContext = ffmpeg.avcodec_alloc_context3(audioCodec);
+            Debug.Assert(codecContext != null, "codecContext != null");
+
+            FFmpegHelper.Verify(ffmpeg.avcodec_parameters_to_context(codecContext, audioStream->codecpar));
+
+            _codecContext = codecContext;
             _audioStream = audioStream;
         }
 
@@ -111,12 +119,12 @@ namespace MonoGame.Extended.VideoPlayback.AudioDecoding {
                 int dstChannelLayout;
 
                 if (channels == 1) {
-                    dstChannelLayout = ffmpeg.AV_CH_LAYOUT_MONO;
+                    dstChannelLayout = (int)ffmpeg.AV_CH_LAYOUT_MONO;
                 } else if (channels == 2) {
-                    dstChannelLayout = ffmpeg.AV_CH_LAYOUT_STEREO;
+                    dstChannelLayout = (int)ffmpeg.AV_CH_LAYOUT_STEREO;
                 } else {
                     // There are more kinds of layouts; but we don't actually need them.
-                    dstChannelLayout = ffmpeg.AV_CH_LAYOUT_SURROUND;
+                    dstChannelLayout = (int)ffmpeg.AV_CH_LAYOUT_SURROUND;
                 }
 
                 // There is another function swr_alloc_setopts(), but re-creating doesn't matter,
@@ -158,6 +166,8 @@ namespace MonoGame.Extended.VideoPlayback.AudioDecoding {
 
             if (_codecContext != null) {
                 ffmpeg.avcodec_close(_codecContext);
+                var codecContext = _codecContext;
+                ffmpeg.avcodec_free_context(&codecContext);
                 _codecContext = null;
             }
 

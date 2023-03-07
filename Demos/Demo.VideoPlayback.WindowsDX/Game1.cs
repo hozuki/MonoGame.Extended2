@@ -33,7 +33,7 @@ namespace Demo.VideoPlayback.WindowsDX {
             _graphics.ApplyChanges();
 
             _videoPlayer = new VideoPlayer(GraphicsDevice);
-            //_videoPlayer.IsLooped = true;
+            _videoPlayer.IsLooped = true;
 
             _keyboardStateHandler = new KeyboardStateHandler(this);
 
@@ -56,7 +56,7 @@ namespace Demo.VideoPlayback.WindowsDX {
 
             _helpTexture = TextureLoader.LoadTexture(GraphicsDevice, "Content/HelpTexture.png");
 
-            _video = VideoHelper.LoadFromFile("Content/SampleVideo_1280x720_1mb.mp4");
+            _video = VideoHelper.LoadFromFile(@"C:\Users\MIC\Desktop\GameVideo\GameVideo\GameVideo\Content\Clip1.wmv");
 
             _videoPlayer.Play(_video);
         }

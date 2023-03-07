@@ -19,8 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGame.Extended.Drawing",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "thirdparty", "thirdparty", "{2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibTessDotNet", "thirdparty\LibTessDotNet\LibTessDotNet\LibTessDotNet.csproj", "{5EE39029-873A-45A0-9259-2198BF8729F4}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agg", "thirdparty\AdaptiveSubdivision\src\Agg\Agg.csproj", "{C0B3B9AF-A9F7-42F0-9C33-C1A7570E299F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agg.AdaptiveSubdivision", "thirdparty\AdaptiveSubdivision\src\Agg.AdaptiveSubdivision\Agg.AdaptiveSubdivision.csproj", "{143CA3BD-4CC8-42A9-9228-D9F630096A92}"
@@ -48,6 +46,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.VideoPlayback.AssSubtitle", "Demos\Demo.VideoPlayback.AssSubtitle\Demo.VideoPlayback.AssSubtitle.csproj", "{7C0CCDE4-0308-4C1E-A178-07D8EFCDFC52}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.VideoPlayback.SrtSubtitle", "Demos\Demo.VideoPlayback.SrtSubtitle\Demo.VideoPlayback.SrtSubtitle.csproj", "{AA257D29-A569-4BAA-9770-AE5F15089E43}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E564C114-43DC-44F2-A1B5-13AE1C400FDA}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,14 +116,6 @@ Global
 		{A4C3762F-B1D2-4D84-B814-4BBA2805DD0E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A4C3762F-B1D2-4D84-B814-4BBA2805DD0E}.ReleaseDouble|Any CPU.ActiveCfg = Release|Any CPU
 		{A4C3762F-B1D2-4D84-B814-4BBA2805DD0E}.ReleaseDouble|Any CPU.Build.0 = Release|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.DebugDouble|Any CPU.ActiveCfg = DebugDouble|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.DebugDouble|Any CPU.Build.0 = DebugDouble|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.ReleaseDouble|Any CPU.ActiveCfg = ReleaseDouble|Any CPU
-		{5EE39029-873A-45A0-9259-2198BF8729F4}.ReleaseDouble|Any CPU.Build.0 = ReleaseDouble|Any CPU
 		{C0B3B9AF-A9F7-42F0-9C33-C1A7570E299F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0B3B9AF-A9F7-42F0-9C33-C1A7570E299F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0B3B9AF-A9F7-42F0-9C33-C1A7570E299F}.DebugDouble|Any CPU.ActiveCfg = Debug|Any CPU
@@ -229,7 +224,6 @@ Global
 		{97417306-EA97-4EEE-85E3-09397E9A18D5} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
 		{126B925D-40BA-4348-90E2-3284B098EE0A} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}
 		{A4C3762F-B1D2-4D84-B814-4BBA2805DD0E} = {36E99F9E-8EC1-48FB-9E2E-C00E90C106A6}
-		{5EE39029-873A-45A0-9259-2198BF8729F4} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
 		{C0B3B9AF-A9F7-42F0-9C33-C1A7570E299F} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
 		{143CA3BD-4CC8-42A9-9228-D9F630096A92} = {2D8529B4-D329-403B-8DE6-3AFA3A05EBA3}
 		{A366F5FD-8263-4F2C-A9BA-09E4A67554F1} = {33D3A2CF-049D-4300-ABDF-9F30E0484EFE}

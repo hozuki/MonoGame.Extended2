@@ -208,7 +208,7 @@ namespace MonoGame.Extended.VideoPlayback {
             for (var i = 0; i < _formatContext->nb_streams; ++i) {
                 var avStream = _formatContext->streams[i];
 
-                if (avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO) {
+                if (avStream->codecpar->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO) {
                     ++count;
                 }
             }
@@ -226,7 +226,7 @@ namespace MonoGame.Extended.VideoPlayback {
             for (var i = 0; i < _formatContext->nb_streams; ++i) {
                 var avStream = _formatContext->streams[i];
 
-                if (avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {
+                if (avStream->codecpar->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {
                     ++count;
                 }
             }
@@ -465,6 +465,12 @@ namespace MonoGame.Extended.VideoPlayback {
                     if (!_isEndedTriggered) {
                         // Must use BeginInvoke. See the explanations of Ended.
                         Ended?.BeginInvoke(this, EventArgs.Empty, null, null);
+                        // var thread = new Thread(thisObject => {
+                        //     var context = (DecodeContext)thisObject;
+                        //     context.Ended?.Invoke(context, EventArgs.Empty);
+                        // });
+
+                        // thread.Start(this);
 
                         _isEndedTriggered = true;
                     }
@@ -497,7 +503,7 @@ namespace MonoGame.Extended.VideoPlayback {
                 var fetchFramesPlease = true;
 
                 {
-                    var pts = ffmpeg.av_frame_get_best_effort_timestamp(audioFrame);
+                    var pts = audioFrame->best_effort_timestamp;
                     var framePresentationTime = PtsToSeconds(audioStream, pts + _audioStartPts);
 
                     if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
@@ -523,7 +529,7 @@ namespace MonoGame.Extended.VideoPlayback {
                             continue;
                         }
 
-                        var pts = ffmpeg.av_frame_get_best_effort_timestamp(audioFrame);
+                        var pts = audioFrame->best_effort_timestamp;
                         var framePresentationTime = PtsToSeconds(audioStream, pts + _audioStartPts);
 
                         if (framePresentationTime > presentationTime + extraAudioBufferingTime) {
@@ -741,7 +747,7 @@ namespace MonoGame.Extended.VideoPlayback {
                         // Then we receive the decoded frame.
                         error = ffmpeg.avcodec_receive_frame(codecContext, frame);
 
-                        var bestEffortPts = ffmpeg.av_frame_get_best_effort_timestamp(frame);
+                        var bestEffortPts = frame->best_effort_timestamp;
 
                         if (error == 0) {
                             // If everything goes well, then again, lucky us.
@@ -983,59 +989,62 @@ namespace MonoGame.Extended.VideoPlayback {
             VideoDecodingContext videoContext = null;
             AudioDecodingContext audioContext = null;
 
-            var visitedVideoStreamIndex = -1;
-            var visitedAudioStreamIndex = -1;
+            AVCodec* videoCodec = null;
+            AVCodec* audioCodec = null;
 
             // 4. Search for video and audio streams.
-            for (var i = 0; i < formatContext->nb_streams; ++i) {
-                var avStream = formatContext->streams[i];
+            _videoStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.AVMEDIA_TYPE_VIDEO, _userSelectedVideoStreamIndex, -1, &videoCodec, 0);
+            if (videoCodec != null && _videoStreamIndex != ffmpeg.AVERROR_STREAM_NOT_FOUND) {
+                var avStream = formatContext->streams[_videoStreamIndex];
 
-                if (videoContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO) {
-                    ++visitedVideoStreamIndex;
+                // 5. If this is a video stream, create a VideoDecodingContext from it...
+                videoContext = new VideoDecodingContext(formatContext, videoCodec, avStream, decodingOptions);
 
-                    if (_userSelectedVideoStreamIndex < 0 || _userSelectedVideoStreamIndex == visitedVideoStreamIndex) {
-                        // 5. If this is a video stream, create a VideoDecodingContext from it...
-                        videoContext = new VideoDecodingContext(avStream, decodingOptions);
-                        _videoStreamIndex = i;
-
-                        // ... and record its start time.
-                        if (isAsfContainerStartTimeFixed) {
-                            if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
-                                _videoStartPts = avStream->start_time;
-                            } else {
-                                _videoStartPts = 0;
-                            }
-                        } else {
-                            if (!isAsfContainer) {
-                                if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
-                                    _videoStartPts = avStream->start_time;
-                                } else {
-                                    _videoStartPts = 0;
-                                }
-                            } else {
-                                // I don't know why but this hack works... at least on FFmpeg 3.4.
-                                _videoStartPts = avStream->cur_dts / 2;
-                            }
-                        }
+                // ... and record its start time.
+                if (isAsfContainerStartTimeFixed) {
+                    if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                        _videoStartPts = avStream->start_time;
+                    } else {
+                        _videoStartPts = 0;
                     }
-                } else if (audioContext == null && avStream->codec->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO) {
-                    ++visitedAudioStreamIndex;
-
-                    if (_userSelectedAudioStreamIndex < 0 || _userSelectedAudioStreamIndex == visitedAudioStreamIndex) {
-                        // 6. If this is an audio stream, create an AudioDecodingContext from it...
-                        audioContext = new AudioDecodingContext(avStream);
-                        _audioStreamIndex = i;
-
-                        // ... and record its start time.
-                        if (!isAsfContainer) {
-                            if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
-                                _audioStartPts = avStream->start_time;
-                            }
+                } else {
+                    if (!isAsfContainer) {
+                        if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                            _videoStartPts = avStream->start_time;
                         } else {
-                            _audioStartPts = 0;
+                            _videoStartPts = 0;
+                        }
+                    } else {
+                        // I don't know why but this hack works... at least on FFmpeg 3.4.
+                        // DTS is not accessible from FFmpeg 4.x? (3.4: cur_dts / 2)
+                        if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                            _videoStartPts = avStream->start_time;
+                        } else {
+                            _videoStartPts = 0;
                         }
                     }
                 }
+            } else {
+                _videoStreamIndex = -1;
+            }
+
+            _audioStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.AVMEDIA_TYPE_AUDIO, _userSelectedAudioStreamIndex, -1, &audioCodec, 0);
+            if (audioCodec != null && _audioStreamIndex != ffmpeg.AVERROR_STREAM_NOT_FOUND) {
+                var avStream = formatContext->streams[_audioStreamIndex];
+
+                // 6. If this is an audio stream, create an AudioDecodingContext from it...
+                audioContext = new AudioDecodingContext(formatContext, audioCodec, avStream);
+
+                // ... and record its start time.
+                if (!isAsfContainer) {
+                    if (avStream->start_time != ffmpeg.AV_NOPTS_VALUE) {
+                        _audioStartPts = avStream->start_time;
+                    }
+                } else {
+                    _audioStartPts = 0;
+                }
+            } else {
+                _audioStreamIndex = -1;
             }
 
             // 7. If we got a video stream...

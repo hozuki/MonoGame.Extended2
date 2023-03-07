@@ -50,18 +50,11 @@ namespace MonoGame.Extended.VideoPlayback {
                     }
 
                     break;
-                case PlatformID.Unix:
-                case PlatformID.MacOSX:
-                    var libraryPath = Environment.GetEnvironmentVariable(LD_LIBRARY_PATH);
-
-                    RegisterLibrariesSearchPath(libraryPath);
-
-                    loadSuccessful = true;
-                    break;
             }
 
             if (loadSuccessful) {
-                ffmpeg.av_register_all();
+                // https://github.com/FFmpeg/FFmpeg/blob/70d25268c21cbee5f08304da95be1f647c630c15/doc/APIchanges#L86
+                // https://github.com/leandromoreira/ffmpeg-libav-tutorial/issues/29
 
                 var ver = ffmpeg.av_version_info();
                 Debug.WriteLine($"Using FFmpeg version {ver}");
@@ -77,46 +70,8 @@ namespace MonoGame.Extended.VideoPlayback {
         }
 
         private static void RegisterLibrariesSearchPath(string path) {
-            switch (Environment.OSVersion.Platform) {
-                case PlatformID.Win32NT:
-                case PlatformID.Win32S:
-                case PlatformID.Win32Windows: {
-                    // Try to use AddDllDirectory first; require Windows 7+ and KB2533623.
-                    SetDllDirectory(path);
-
-                    break;
-                }
-                case PlatformID.Unix:
-                case PlatformID.MacOSX: {
-                    var currentValue = Environment.GetEnvironmentVariable(LD_LIBRARY_PATH);
-                    if (!string.IsNullOrWhiteSpace(currentValue) && !currentValue.Contains(path)) {
-                        var newValue = $"{currentValue}{Path.PathSeparator.ToString()}{path}";
-                        Environment.SetEnvironmentVariable(LD_LIBRARY_PATH, newValue);
-                    }
-
-                    break;
-                }
-                default: {
-                    Trace.WriteLine("Unsupported platform for setting search path.");
-
-                    break;
-                }
-            }
+            ffmpeg.RootPath = path;
         }
-
-        [DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool SetDllDirectory(string lpPathName);
-
-        [DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, PreserveSig = true)]
-        private static extern IntPtr AddDllDirectory(string lpNewDirectory);
-
-        [DllImport("kernel32", SetLastError = true, CallingConvention = CallingConvention.StdCall, PreserveSig = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool RemoveDllDirectory(IntPtr cookie);
-
-        // ReSharper disable once InconsistentNaming
-        private const string LD_LIBRARY_PATH = "LD_LIBRARY_PATH";
 
         private static bool _pathsRegistered;
 

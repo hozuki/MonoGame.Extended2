@@ -57,10 +57,10 @@ namespace Demo.Drawing {
                     StartPoint = new Vector2(305, 305),
                     EndPoint = new Vector2(405, 405)
                 }, new GradientStopCollection(new[] {
-                    new GradientStop {Color = Color.Red, Position = 0.0f},
-                    new GradientStop {Color = Color.Yellow, Position = 0.4f},
-                    new GradientStop {Color = Color.Blue, Position = 0.8f},
-                    new GradientStop {Color = Color.Cyan, Position = 1.0f}
+                    new GradientStop { Color = Color.Red, Position = 0.0f },
+                    new GradientStop { Color = Color.Yellow, Position = 0.4f },
+                    new GradientStop { Color = Color.Blue, Position = 0.8f },
+                    new GradientStop { Color = Color.Cyan, Position = 1.0f }
                 }, Gamma.Linear, ExtendMode.Mirror));
 
             var pathGeometry = new PathGeometry();

@@ -5,17 +5,17 @@ namespace MonoGame.Extended.Drawing.Effects {
 
         private static readonly IReadOnlyDictionary<GraphicsBackend, string> SolidColorBrushResourceNames = new Dictionary<GraphicsBackend, string>(2) {
             [GraphicsBackend.Direct3D11] = SolidColorBrushEffect_Direct3D11,
-            [GraphicsBackend.OpenGL] = SolidColorBrushEffect_OpenGL
+            [GraphicsBackend.OpenGL] = SolidColorBrushEffect_OpenGL,
         };
 
         private static readonly IReadOnlyDictionary<GraphicsBackend, string> BitmapBrushResourceNames = new Dictionary<GraphicsBackend, string>(2) {
             [GraphicsBackend.Direct3D11] = BitmapBrushEffect_Direct3D11,
-            [GraphicsBackend.OpenGL] = BitmapBrushEffect_OpenGL
+            [GraphicsBackend.OpenGL] = BitmapBrushEffect_OpenGL,
         };
 
         private static readonly IReadOnlyDictionary<GraphicsBackend, string> LinearGradientBrushResourceNames = new Dictionary<GraphicsBackend, string>(2) {
             [GraphicsBackend.Direct3D11] = LinearGradientBrushEffect_Direct3D11,
-            [GraphicsBackend.OpenGL] = LinearGradientBrushEffect_OpenGL
+            [GraphicsBackend.OpenGL] = LinearGradientBrushEffect_OpenGL,
         };
 
     }

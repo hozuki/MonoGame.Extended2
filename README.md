@@ -1,5 +1,7 @@
 # MonoGame.Extended2
 
+[![AppVeyor](https://img.shields.io/appveyor/build/hozuki/MonoGame-Extended2)](https://ci.appveyor.com/project/hozuki/monogame-extended2)
+
 A collection of extensions for MonoGame; a complement of [MonoGame.Extended](https://github.com/craftworkgames/MonoGame.Extended).
 
 ## Projects

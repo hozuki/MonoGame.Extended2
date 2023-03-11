@@ -1,4 +1,4 @@
-﻿#define TEST_ASS
+﻿//#define TEST_ASS
 //#define TEST_SRT
 //#define TEST_WMV_FILE
 

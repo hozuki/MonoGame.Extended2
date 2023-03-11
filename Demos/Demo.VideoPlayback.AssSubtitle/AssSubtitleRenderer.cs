@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Assassin;
 using Assassin.Native;
 using Microsoft.Xna.Framework;
@@ -46,7 +44,6 @@ public class AssSubtitleRenderer : SubtitleRenderer
             _dimensions = value;
 
             _renderer.SetFrameSize(value.X, value.Y);
-            _imageBuffer = new RgbaImage(value.X, value.Y);
         }
     }
 
@@ -63,23 +60,34 @@ public class AssSubtitleRenderer : SubtitleRenderer
             return;
         }
 
-        if (_imageBuffer == null)
-        {
-            throw new InvalidOperationException("Image buffer is not created. Maybe dimensions are not set.");
-        }
-
-        _imageBuffer.Clear();
-
         var now = (long)Math.Round(time.TotalMilliseconds);
         var image = _renderer.RenderFrame(_currentTrack, now);
 
-        image.Blend(_imageBuffer);
+        var width = texture.Width;
+        var height = texture.Height;
 
-        DrawOnTexture(_imageBuffer, texture);
+        if (_textureDataBuffer is null || _textureDataBuffer.Length == width * height)
+        {
+            _textureDataBuffer = new Color32Rgba[width * height];
+        }
+
+        texture.GetData(_textureDataBuffer);
+
+        unsafe
+        {
+            fixed (Color32Rgba* buffer = _textureDataBuffer)
+            {
+                image.Blend(buffer, width, height);
+            }
+        }
+
+        texture.SetData(_textureDataBuffer);
     }
 
     protected override void Dispose(bool disposing)
     {
+        _textureDataBuffer = null;
+
         if (disposing)
         {
             _currentTrack?.Dispose();
@@ -90,71 +98,13 @@ public class AssSubtitleRenderer : SubtitleRenderer
         }
     }
 
-    private static void DrawOnTexture(RgbaImage image, Texture2D texture)
-    {
-        Debug.Assert(texture.Format == SurfaceFormat.Color);
-        Debug.Assert(image.Width == texture.Width);
-        Debug.Assert(image.Height == texture.Height);
-
-        var width = image.Width;
-        var height = image.Height;
-
-        var textureData = new Color[width * height];
-
-        texture.GetData(textureData);
-
-        unsafe
-        {
-            fixed (Color* dest = textureData)
-            {
-                fixed (Color32* src = image.Buffer)
-                {
-                    for (var j = 0; j < height; ++j)
-                    {
-                        for (var i = 0; i < width; ++i)
-                        {
-                            var index = j * width + i;
-                            var s = src[index];
-                            var d = dest[index];
-                            var blended = AlphaBlend(in s, in d);
-
-                            dest[index] = blended;
-                        }
-                    }
-                }
-            }
-        }
-
-        texture.SetData(textureData);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Color AlphaBlend(in Color32 src, in Color dst)
-    {
-        var alpha = src.A / (float)byte.MaxValue;
-        var mk = 1 - alpha;
-
-        var r = MathHelper.Clamp((int)(alpha * src.R + dst.R * mk), byte.MinValue, byte.MaxValue);
-        var g = MathHelper.Clamp((int)(alpha * src.G + dst.G * mk), byte.MinValue, byte.MaxValue);
-        var b = MathHelper.Clamp((int)(alpha * src.B + dst.B * mk), byte.MinValue, byte.MaxValue);
-        var a = MathHelper.Clamp((int)(alpha * src.A + dst.A * mk), byte.MinValue, byte.MaxValue);
-
-        return new Color
-        {
-            R = (byte)r,
-            G = (byte)g,
-            B = (byte)b,
-            A = (byte)a
-        };
-    }
-
     private readonly AssLibrary _library;
 
     private readonly AssRenderer _renderer;
 
     private AssTrack? _currentTrack;
 
-    private RgbaImage? _imageBuffer;
+    private Color32Rgba[]? _textureDataBuffer;
 
     private Point _dimensions;
 

@@ -1,16 +1,20 @@
-using JetBrains.Annotations;
+namespace MonoGame.Extended.Overlay;
 
-namespace MonoGame.Extended.Overlay {
-    public sealed class StringFormat {
+public sealed class StringFormat
+{
 
-        public bool IsVertical { get; set; }
-
-        public TextAlign Align { get; set; } = TextAlign.Left;
-
-        public VerticalTextAlign VerticalAlign { get; set; } = VerticalTextAlign.Top;
-
-        [CanBeNull]
-        public float? PreferredLineHeight { get; set; }
-
+    public StringFormat()
+    {
+        Align = TextAlign.Left;
+        VerticalAlign = VerticalTextAlign.Top;
     }
+
+    public bool IsVertical { get; set; }
+
+    public TextAlign Align { get; set; }
+
+    public VerticalTextAlign VerticalAlign { get; set; }
+
+    public float? PreferredLineHeight { get; set; }
+
 }

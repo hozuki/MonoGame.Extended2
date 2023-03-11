@@ -1,147 +1,169 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using JetBrains.Annotations;
 
-namespace Demo.VideoPlayback.SrtSubtitle {
-    internal static class SrtParser {
+namespace Demo.VideoPlayback.SrtSubtitle;
 
-        static SrtParser() {
+internal static class SrtParser
+{
+
+    static SrtParser()
+    {
+    }
+
+    public static SrtEntry[] Parse(string content)
+    {
+        var entries = new List<SrtEntry>();
+
+        var lines = content.Split(LineSeparator, StringSplitOptions.None);
+
+        for (var i = 0; i < lines.Length; ++i)
+        {
+            lines[i] = lines[i].Trim(TrimChars);
         }
 
-        [NotNull, ItemNotNull]
-        public static SrtEntry[] Parse([NotNull] string content) {
-            var entries = new List<SrtEntry>();
+        var state = ParseState.EntryEnd;
 
-            var lines = content.Split(LineSeparator, StringSplitOptions.None);
+        var seqNumber = 0;
+        string? currentText = null;
+        TimeSpan start = TimeSpan.Zero, end = TimeSpan.Zero;
 
-            for (var i = 0; i < lines.Length; ++i) {
-                lines[i] = lines[i].Trim(TrimChars);
-            }
+        void AddEntry(int sequenceNumber, in TimeSpan startTime, in TimeSpan endTime, string? text)
+        {
+            var entry = new SrtEntry(sequenceNumber, startTime, endTime, text ?? string.Empty);
 
-            var state = ParseState.EntryEnd;
+            entries.Add(entry);
+        }
 
-            var seqNumber = 0;
-            string currentText = null;
-            TimeSpan start = TimeSpan.Zero, end = TimeSpan.Zero;
-
-            void AddEntry(int sequenceNumber, in TimeSpan startTime, in TimeSpan endTime, string text) {
-                var entry = new SrtEntry(sequenceNumber, startTime, endTime, text);
-
-                entries.Add(entry);
-            }
-
-            foreach (var line in lines) {
-                switch (state) {
-                    case ParseState.EntryEnd: {
-                        if (string.IsNullOrEmpty(line)) {
-                            continue;
-                        }
-
-                        seqNumber = Convert.ToInt32(line);
-
-                        state = ParseState.ParsedSeqNumber;
-
-                        break;
+        foreach (var line in lines)
+        {
+            switch (state)
+            {
+                case ParseState.EntryEnd:
+                {
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
                     }
-                    case ParseState.ParsedSeqNumber: {
-                        if (string.IsNullOrEmpty(line)) {
-                            continue;
-                        }
 
-                        var codes = line.Split(TimeCodeSeparator, StringSplitOptions.RemoveEmptyEntries);
+                    seqNumber = Convert.ToInt32(line);
 
-                        if (codes.Length != 2) {
-                            throw new FormatException("Time code should have 2 parts");
-                        }
+                    state = ParseState.ParsedSeqNumber;
 
-                        start = ParseTimeSpan(codes[0]);
-                        end = ParseTimeSpan(codes[1]);
-
-                        state = ParseState.ParsedTimeCode;
-
-                        break;
-                    }
-                    case ParseState.ParsedTimeCode: {
-                        if (string.IsNullOrEmpty(line)) {
-                            continue;
-                        }
-
-                        currentText = line;
-
-                        state = ParseState.ReadingText;
-
-                        break;
-                    }
-                    case ParseState.ReadingText: {
-                        if (string.IsNullOrEmpty(line)) {
-                            AddEntry(seqNumber, start, end, currentText);
-
-                            state = ParseState.EntryEnd;
-                        } else {
-                            if (string.IsNullOrEmpty(currentText)) {
-                                currentText = line;
-                            } else {
-                                currentText = currentText + Environment.NewLine + line;
-                            }
-                        }
-
-                        break;
-                    }
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    break;
                 }
+                case ParseState.ParsedSeqNumber:
+                {
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
+
+                    var codes = line.Split(TimeCodeSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+                    if (codes.Length != 2)
+                    {
+                        throw new FormatException("Time code should have 2 parts");
+                    }
+
+                    start = ParseTimeSpan(codes[0]);
+                    end = ParseTimeSpan(codes[1]);
+
+                    state = ParseState.ParsedTimeCode;
+
+                    break;
+                }
+                case ParseState.ParsedTimeCode:
+                {
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
+
+                    currentText = line;
+
+                    state = ParseState.ReadingText;
+
+                    break;
+                }
+                case ParseState.ReadingText:
+                {
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        AddEntry(seqNumber, start, end, currentText);
+
+                        state = ParseState.EntryEnd;
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(currentText))
+                        {
+                            currentText = line;
+                        }
+                        else
+                        {
+                            currentText = currentText + Environment.NewLine + line;
+                        }
+                    }
+
+                    break;
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-
-            if (state == ParseState.ReadingText) {
-                // Finish and create a new entry
-                AddEntry(seqNumber, start, end, currentText);
-            } else if (state == ParseState.EntryEnd) {
-                // All read
-            } else {
-                throw new FormatException("Something is wrong with the SRT file");
-            }
-
-            entries.Sort();
-
-            return entries.ToArray();
         }
 
-        private static TimeSpan ParseTimeSpan([NotNull] string str) {
-            var seps = str.Split(TimeSpanSeparators);
-
-            Debug.Assert(seps.Length == 4);
-
-            var h = Convert.ToInt32(seps[0]);
-            var m = Convert.ToInt32(seps[1]);
-            var s = Convert.ToInt32(seps[2]);
-            var ms = Convert.ToInt32(seps[3]);
-
-            var ts = new TimeSpan(0, h, m, s, ms);
-
-            return ts;
+        if (state == ParseState.ReadingText)
+        {
+            // Finish and create a new entry
+            AddEntry(seqNumber, start, end, currentText);
+        }
+        else if (state == ParseState.EntryEnd)
+        {
+            // All read
+        }
+        else
+        {
+            throw new FormatException("Something is wrong with the SRT file");
         }
 
-        private enum ParseState {
+        entries.Sort();
 
-            EntryEnd = 0,
-            ParsedSeqNumber = 1,
-            ParsedTimeCode = 2,
-            ReadingText = 3
+        return entries.ToArray();
+    }
 
-        }
+    private static TimeSpan ParseTimeSpan(string str)
+    {
+        var segments = str.Split(TimeSpanSeparators);
 
-        [NotNull]
-        private static readonly char[] LineSeparator = { '\n' };
+        Debug.Assert(segments.Length == 4);
 
-        [NotNull]
-        private static readonly char[] TimeSpanSeparators = { ':', ',' };
+        var h = Convert.ToInt32(segments[0]);
+        var m = Convert.ToInt32(segments[1]);
+        var s = Convert.ToInt32(segments[2]);
+        var ms = Convert.ToInt32(segments[3]);
 
-        [NotNull]
-        private static readonly char[] TrimChars = { '\r', ' ', '\t' };
+        var ts = new TimeSpan(0, h, m, s, ms);
 
-        [NotNull, ItemNotNull]
-        private static readonly string[] TimeCodeSeparator = { "-->" };
+        return ts;
+    }
+
+    private enum ParseState
+    {
+
+        EntryEnd = 0,
+        ParsedSeqNumber = 1,
+        ParsedTimeCode = 2,
+        ReadingText = 3
 
     }
+
+    private static readonly char[] LineSeparator = { '\n' };
+
+    private static readonly char[] TimeSpanSeparators = { ':', ',' };
+
+    private static readonly char[] TrimChars = { '\r', ' ', '\t' };
+
+    private static readonly string[] TimeCodeSeparator = { "-->" };
+
 }

@@ -1,16 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    public struct BrushProperties {
+namespace MonoGame.Extended.Drawing;
 
-        public float Opacity { get; set; }
+public struct BrushProperties
+{
 
-        public Matrix3x2 Transform { get; set; }
+    public float Opacity { get; set; }
 
-        internal static readonly BrushProperties Default = new BrushProperties {
-            Opacity = 1,
-            Transform = Matrix3x2.Identity
-        };
+    public Matrix3x2 Transform { get; set; }
 
-    }
+    internal static readonly BrushProperties Default = new()
+    {
+        Opacity = 1,
+        Transform = Matrix3x2.Identity,
+    };
+
 }

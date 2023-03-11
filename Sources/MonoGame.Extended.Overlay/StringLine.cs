@@ -1,9 +1,3 @@
-namespace MonoGame.Extended.Overlay {
-    internal sealed class StringLine {
+namespace MonoGame.Extended.Overlay;
 
-        internal string Value { get; set; }
-
-        internal float Width { get; set; }
-
-    }
-}
+internal sealed record StringLine(string Value, float Width);

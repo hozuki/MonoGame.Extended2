@@ -1,13 +1,16 @@
-﻿using Microsoft.Xna.Framework;
+﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    public struct BezierSegment {
+namespace MonoGame.Extended.Drawing;
 
-        public Vector2 Point1 { get; set; }
+[PublicAPI]
+public struct BezierSegment
+{
 
-        public Vector2 Point2 { get; set; }
+    public Vector2 Point1 { get; set; }
 
-        public Vector2 Point3 { get; set; }
+    public Vector2 Point2 { get; set; }
 
-    }
+    public Vector2 Point3 { get; set; }
+
 }

@@ -1,20 +1,24 @@
-﻿using JetBrains.Annotations;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    internal sealed class Figure {
+namespace MonoGame.Extended.Drawing;
 
-        internal Figure(Vector2 origin, [NotNull] GeometryElement[] elements, FigureEnd figureEnd) {
-            Origin = origin;
-            Elements = elements;
-            FigureEnd = figureEnd;
-        }
+internal sealed class Figure
+{
 
-        internal Vector2 Origin { get; }
-
-        internal GeometryElement[] Elements { get; }
-
-        internal FigureEnd FigureEnd { get; }
-
+    public Figure(Vector2 origin, GeometryElement[] elements, FigureBegin figureBegin, FigureEnd figureEnd)
+    {
+        Origin = origin;
+        Elements = elements;
+        FigureBegin = figureBegin;
+        FigureEnd = figureEnd;
     }
+
+    public Vector2 Origin { get; }
+
+    public GeometryElement[] Elements { get; }
+
+    public FigureBegin FigureBegin { get; }
+
+    public FigureEnd FigureEnd { get; }
+
 }

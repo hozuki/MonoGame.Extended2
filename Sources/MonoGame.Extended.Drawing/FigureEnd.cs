@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum FigureEnd {
+﻿using JetBrains.Annotations;
 
-        Open = 0,
-        Closed = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum FigureEnd
+{
+
+    Open = 0,
+    Closed = 1,
+
 }

@@ -1,29 +1,30 @@
 using System;
-using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace MonoGame.Extended.VideoPlayback {
-    internal struct RenderTargetSwitcher : IDisposable {
+namespace MonoGame.Extended.VideoPlayback;
 
-        private RenderTargetSwitcher([NotNull] GraphicsDevice graphicsDevice, [NotNull] RenderTarget2D renderTarget) {
-            _graphicsDevice = graphicsDevice;
-            _originalTargets = graphicsDevice.GetRenderTargets();
-            graphicsDevice.SetRenderTarget(renderTarget);
-        }
+internal struct RenderTargetSwitcher : IDisposable
+{
 
-        public static RenderTargetSwitcher SwitchTo([NotNull] GraphicsDevice graphicsDevice, [NotNull] RenderTarget2D renderTarget) {
-            return new RenderTargetSwitcher(graphicsDevice, renderTarget);
-        }
-
-        public void Dispose() {
-            _graphicsDevice.SetRenderTargets(_originalTargets);
-        }
-
-        [NotNull]
-        private readonly GraphicsDevice _graphicsDevice;
-
-        [NotNull]
-        private readonly RenderTargetBinding[] _originalTargets;
-
+    private RenderTargetSwitcher(GraphicsDevice graphicsDevice, RenderTarget2D renderTarget)
+    {
+        _graphicsDevice = graphicsDevice;
+        _originalTargets = graphicsDevice.GetRenderTargets();
+        graphicsDevice.SetRenderTarget(renderTarget);
     }
+
+    public static RenderTargetSwitcher SwitchTo(GraphicsDevice graphicsDevice, RenderTarget2D renderTarget)
+    {
+        return new RenderTargetSwitcher(graphicsDevice, renderTarget);
+    }
+
+    public void Dispose()
+    {
+        _graphicsDevice.SetRenderTargets(_originalTargets);
+    }
+
+    private readonly GraphicsDevice _graphicsDevice;
+
+    private readonly RenderTargetBinding[] _originalTargets;
+
 }

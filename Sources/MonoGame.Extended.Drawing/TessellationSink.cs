@@ -1,38 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace MonoGame.Extended.Drawing {
-    public sealed class TessellationSink : Sink {
+namespace MonoGame.Extended.Drawing;
 
-        internal TessellationSink([NotNull] Mesh mesh) {
-            _mesh = mesh;
-            _triangles = new List<Triangle>();
-        }
+[PublicAPI]
+public sealed class TessellationSink : Sink
+{
 
-        public void AddTriangle(Triangle triangle) {
-            EnsureNotClosed();
-
-            _triangles.Add(triangle);
-        }
-
-        public void AddTriangles([NotNull] Triangle[] triangles) {
-            EnsureNotClosed();
-
-            _triangles.AddRange(triangles);
-        }
-
-        internal Triangle[] Triangles { get; private set; }
-
-        protected override void OnClosed() {
-            Triangles = _triangles.ToArray();
-            _mesh.CloseSink(this);
-
-            base.OnClosed();
-        }
-
-        private readonly List<Triangle> _triangles;
-
-        private readonly Mesh _mesh;
-
+    internal TessellationSink(Mesh mesh)
+    {
+        _mesh = mesh;
+        _mutableTriangles = new List<Triangle>();
+        _frozenTriangles = Array.Empty<Triangle>();
     }
+
+    public void AddTriangle(Triangle triangle)
+    {
+        EnsureNotClosed();
+
+        _mutableTriangles.Add(triangle);
+    }
+
+    public void AddTriangles(Triangle[] triangles)
+    {
+        EnsureNotClosed();
+
+        _mutableTriangles.AddRange(triangles);
+    }
+
+    internal void SetFrozenTriangles(Triangle[] triangles)
+    {
+        _frozenTriangles = triangles;
+    }
+
+    internal Triangle[] Triangles => _frozenTriangles;
+
+    protected override void OnClosed()
+    {
+        _frozenTriangles = _mutableTriangles.ToArray();
+        _mutableTriangles.Clear();
+        _mesh.Close(this);
+    }
+
+    private readonly List<Triangle> _mutableTriangles;
+    private Triangle[] _frozenTriangles;
+
+    private readonly Mesh _mesh;
+
 }

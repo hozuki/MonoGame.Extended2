@@ -1,26 +1,31 @@
 ﻿using System;
+using JetBrains.Annotations;
 
-namespace MonoGame.Extended.Drawing {
-    public abstract class Sink : ISink {
+namespace MonoGame.Extended.Drawing;
 
-        public void Close() {
-            EnsureNotClosed();
+[PublicAPI]
+public abstract class Sink : ISink
+{
 
-            _isClosed = true;
+    public void Close()
+    {
+        EnsureNotClosed();
 
-            OnClosed();
-        }
+        _isClosed = true;
 
-        protected virtual void OnClosed() {
-        }
-
-        protected void EnsureNotClosed() {
-            if (_isClosed) {
-                throw new InvalidOperationException();
-            }
-        }
-
-        private bool _isClosed;
-
+        OnClosed();
     }
+
+    protected abstract void OnClosed();
+
+    protected void EnsureNotClosed()
+    {
+        if (_isClosed)
+        {
+            throw new InvalidOperationException("The sink is closed.");
+        }
+    }
+
+    private bool _isClosed;
+
 }

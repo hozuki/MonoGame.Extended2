@@ -1,18 +1,18 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.WinForms {
-    public sealed class TimedEventArgs : EventArgs {
+namespace MonoGame.Extended.WinForms;
 
-        public TimedEventArgs([NotNull] GameTime gameTime) {
-            Guard.ArgumentNotNull(gameTime, nameof(gameTime));
+public sealed class TimedEventArgs : EventArgs
+{
 
-            GameTime = gameTime;
-        }
+    public TimedEventArgs(GameTime gameTime)
+    {
+        Guard.ArgumentNotNull(gameTime, nameof(gameTime));
 
-        [NotNull]
-        public GameTime GameTime { get; }
-
+        GameTime = gameTime;
     }
+
+    public GameTime GameTime { get; }
+
 }

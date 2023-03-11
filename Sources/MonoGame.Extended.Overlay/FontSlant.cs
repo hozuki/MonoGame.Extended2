@@ -1,11 +1,12 @@
 ﻿using SkiaSharp;
 
-namespace MonoGame.Extended.Overlay {
-    public enum FontSlant {
+namespace MonoGame.Extended.Overlay;
 
-        Normal = SKFontStyleSlant.Upright,
-        Italic = SKFontStyleSlant.Italic,
-        Oblique = SKFontStyleSlant.Oblique
+public enum FontSlant
+{
 
-    }
+    Normal = SKFontStyleSlant.Upright,
+    Italic = SKFontStyleSlant.Italic,
+    Oblique = SKFontStyleSlant.Oblique
+
 }

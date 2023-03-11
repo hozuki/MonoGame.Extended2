@@ -1,9 +1,10 @@
 ﻿using Microsoft.Xna.Framework.Input;
 
-namespace Demo.WinForms.WindowsDX.Test {
-    public abstract class InputManagerImplementation {
+namespace Demo.WinForms.WindowsDX.Test;
 
-        public abstract KeyboardState GetKeyboardState();
+public abstract class InputManagerImplementation
+{
 
-    }
+    public abstract KeyboardState GetKeyboardState();
+
 }

@@ -1,9 +1,13 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum ExtendMode {
+﻿using JetBrains.Annotations;
 
-        Clamp = 0,
-        Wrap = 1,
-        Mirror = 2
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum ExtendMode
+{
+
+    Clamp = 0,
+    Wrap = 1,
+    Mirror = 2,
+
 }

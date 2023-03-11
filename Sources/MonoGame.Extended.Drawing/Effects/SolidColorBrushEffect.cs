@@ -1,37 +1,40 @@
-﻿using JetBrains.Annotations;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace MonoGame.Extended.Drawing.Effects {
-    internal sealed class SolidColorBrushEffect : BrushEffect {
+namespace MonoGame.Extended.Drawing.Effects;
 
-        private SolidColorBrushEffect([NotNull] GraphicsDevice graphicsDevice, [NotNull] byte[] effectCode)
-            : base(graphicsDevice, effectCode) {
-            Initialize();
-        }
+internal sealed class SolidColorBrushEffect : BrushEffect
+{
 
-        internal override void Apply() {
-            CurrentTechnique.Passes[0].Apply();
-        }
-
-        internal static SolidColorBrushEffect Create([NotNull] DrawingContext drawingContext) {
-            var bytecode = drawingContext.EffectResources.SolidColorBrush.Bytecode;
-
-            return new SolidColorBrushEffect(drawingContext.GraphicsDevice, bytecode);
-        }
-
-        internal Vector4 Color {
-            get => _color.GetValueVector4();
-            set => _color.SetValue(value);
-        }
-
-        private void Initialize() {
-            var p = Parameters;
-
-            _color = p["g_color"];
-        }
-
-        private EffectParameter _color;
-
+    private SolidColorBrushEffect(GraphicsDevice graphicsDevice, byte[] effectCode)
+        : base(graphicsDevice, effectCode)
+    {
+        Initialize(Parameters, out _color);
     }
+
+    public override void Apply()
+    {
+        CurrentTechnique.Passes[0].Apply();
+    }
+
+    public static SolidColorBrushEffect Create(DrawingContext drawingContext)
+    {
+        var bytecode = drawingContext.EffectResources.SolidColorBrush.Bytecode;
+
+        return new SolidColorBrushEffect(drawingContext.GraphicsDevice, bytecode);
+    }
+
+    public Vector4 Color
+    {
+        get => _color.GetValueVector4();
+        set => _color.SetValue(value);
+    }
+
+    private void Initialize(EffectParameterCollection parameters, out EffectParameter color)
+    {
+        color = parameters["g_color"];
+    }
+
+    private readonly EffectParameter _color;
+
 }

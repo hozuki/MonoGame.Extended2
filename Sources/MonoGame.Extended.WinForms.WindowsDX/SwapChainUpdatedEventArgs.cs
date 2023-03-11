@@ -1,18 +1,20 @@
 ﻿using System;
-using JetBrains.Annotations;
+using System.Runtime.Versioning;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace MonoGame.Extended.WinForms.WindowsDX {
-    public sealed class SwapChainUpdatedEventArgs : EventArgs {
+namespace MonoGame.Extended.WinForms.WindowsDX;
 
-        public SwapChainUpdatedEventArgs([NotNull] SwapChainRenderTarget swapChainRenderTarget) {
-            Guard.ArgumentNotNull(swapChainRenderTarget, nameof(swapChainRenderTarget));
+[SupportedOSPlatform("windows7.0")]
+public sealed class SwapChainUpdatedEventArgs : EventArgs
+{
 
-            SwapChain = swapChainRenderTarget;
-        }
+    public SwapChainUpdatedEventArgs(SwapChainRenderTarget swapChainRenderTarget)
+    {
+        Guard.ArgumentNotNull(swapChainRenderTarget, nameof(swapChainRenderTarget));
 
-        [NotNull]
-        public SwapChainRenderTarget SwapChain { get; }
-
+        SwapChain = swapChainRenderTarget;
     }
+
+    public SwapChainRenderTarget SwapChain { get; }
+
 }

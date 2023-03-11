@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum GeometrySimplificationOption {
+﻿using JetBrains.Annotations;
 
-        CubicsAndLines = 0,
-        Lines = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum GeometrySimplificationOption
+{
+
+    CubicsAndLines = 0,
+    Lines = 1,
+
 }

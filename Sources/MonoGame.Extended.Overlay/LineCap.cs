@@ -1,9 +1,10 @@
-﻿namespace MonoGame.Extended.Overlay {
-    public enum LineCap {
+﻿namespace MonoGame.Extended.Overlay;
 
-        Round = 0,
-        Square = 1,
-        Butt = 2
+public enum LineCap
+{
 
-    }
+    Round = 0,
+    Square = 1,
+    Butt = 2
+
 }

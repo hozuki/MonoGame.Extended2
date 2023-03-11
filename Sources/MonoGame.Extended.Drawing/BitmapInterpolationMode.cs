@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum BitmapInterpolationMode {
+﻿using JetBrains.Annotations;
 
-        Nearest = 0,
-        Linear = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum BitmapInterpolationMode
+{
+
+    Nearest = 0,
+    Linear = 1,
+
 }

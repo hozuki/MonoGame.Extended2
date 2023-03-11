@@ -1,13 +1,16 @@
-﻿using Microsoft.Xna.Framework;
+﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    public struct Ellipse {
+namespace MonoGame.Extended.Drawing;
 
-        public Vector2 Point { get; set; }
+[PublicAPI]
+public struct Ellipse
+{
 
-        public float RadiusX { get; set; }
+    public Vector2 Point { get; set; }
 
-        public float RadiusY { get; set; }
+    public float RadiusX { get; set; }
 
-    }
+    public float RadiusY { get; set; }
+
 }

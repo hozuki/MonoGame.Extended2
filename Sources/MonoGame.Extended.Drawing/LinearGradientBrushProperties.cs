@@ -1,11 +1,14 @@
-﻿using Microsoft.Xna.Framework;
+﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    public struct LinearGradientBrushProperties {
+namespace MonoGame.Extended.Drawing;
 
-        public Vector2 StartPoint { get; set; }
+[PublicAPI]
+public struct LinearGradientBrushProperties
+{
 
-        public Vector2 EndPoint { get; set; }
+    public Vector2 StartPoint { get; set; }
 
-    }
+    public Vector2 EndPoint { get; set; }
+
 }

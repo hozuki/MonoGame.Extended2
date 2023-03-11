@@ -1,11 +1,12 @@
 ﻿using SkiaSharp;
 
-namespace MonoGame.Extended.Overlay {
-    public enum TileMode {
+namespace MonoGame.Extended.Overlay;
 
-        Clamp = SKShaderTileMode.Clamp,
-        Repeat = SKShaderTileMode.Repeat,
-        Mirror = SKShaderTileMode.Mirror
+public enum TileMode
+{
 
-    }
+    Clamp = SKShaderTileMode.Clamp,
+    Repeat = SKShaderTileMode.Repeat,
+    Mirror = SKShaderTileMode.Mirror
+
 }

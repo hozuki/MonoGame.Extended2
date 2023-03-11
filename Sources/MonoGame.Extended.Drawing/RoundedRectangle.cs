@@ -1,13 +1,16 @@
-﻿using Microsoft.Xna.Framework;
+﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    public struct RoundedRectangle {
+namespace MonoGame.Extended.Drawing;
 
-        public RectangleF Rectangle { get; set; }
+[PublicAPI]
+public struct RoundedRectangle
+{
 
-        public float RadiusX { get; set; }
+    public RectangleF Rectangle { get; set; }
 
-        public float RadiusY { get; set; }
+    public float RadiusX { get; set; }
 
-    }
+    public float RadiusY { get; set; }
+
 }

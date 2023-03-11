@@ -1,12 +1,13 @@
 ﻿using SkiaSharp;
 
-namespace MonoGame.Extended.Overlay {
-    public enum FontStyle {
+namespace MonoGame.Extended.Overlay;
 
-        Regular = SKTypefaceStyle.Normal,
-        Italic = SKTypefaceStyle.Italic,
-        Bold = SKTypefaceStyle.Bold,
-        BoldItalic = SKTypefaceStyle.BoldItalic
+public enum FontStyle
+{
 
-    }
+    Regular = SKTypefaceStyle.Normal,
+    Italic = SKTypefaceStyle.Italic,
+    Bold = SKTypefaceStyle.Bold,
+    BoldItalic = SKTypefaceStyle.BoldItalic
+
 }

@@ -1,11 +1,15 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public struct BitmapBrushProperties {
+﻿using JetBrains.Annotations;
 
-        public ExtendMode ExtendModeX { get; set; }
+namespace MonoGame.Extended.Drawing;
 
-        public ExtendMode ExtendModeY { get; set; }
+[PublicAPI]
+public struct BitmapBrushProperties
+{
 
-        public BitmapInterpolationMode InterpolationMode { get; set; }
+    public ExtendMode ExtendModeX { get; set; }
 
-    }
+    public ExtendMode ExtendModeY { get; set; }
+
+    public BitmapInterpolationMode InterpolationMode { get; set; }
+
 }

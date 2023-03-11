@@ -2,89 +2,69 @@
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.Drawing.Geometries;
 
-namespace MonoGame.Extended.Drawing {
-    [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    internal struct GeometryElement {
+namespace MonoGame.Extended.Drawing;
 
-        internal GeometryElement(Vector2 lineSegment)
-            : this() {
-            _type = GeometryElementType.Line;
-            _lineSegment = lineSegment;
-        }
+[StructLayout(LayoutKind.Explicit, Pack = 1)]
+internal struct GeometryElement
+{
 
-        internal GeometryElement(ArcSegment arcSegment)
-            : this() {
-            _type = GeometryElementType.Arc;
-            _arcSegment = arcSegment;
-        }
-
-        internal GeometryElement(BezierSegment bezierSegment)
-            : this() {
-            _type = GeometryElementType.Bezier;
-            _bezierSegment = bezierSegment;
-        }
-
-        internal GeometryElement(QuadraticBezierSegment quadraticBezierSegment)
-            : this() {
-            _type = GeometryElementType.QuadraticBezier;
-            _quadraticBezierSegment = quadraticBezierSegment;
-        }
-
-        /// <summary>
-        /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
-        /// </summary>
-        internal GeometryElement(MathArcSegment mathArcSegment)
-            : this() {
-            _type = GeometryElementType.MathArc;
-            _mathArcSegment = mathArcSegment;
-        }
-
-        internal GeometryElementType Type {
-            get => _type;
-            set => _type = value;
-        }
-
-        internal Vector2 LineSegment {
-            get => _lineSegment;
-            set => _lineSegment = value;
-        }
-
-        internal ArcSegment ArcSegment {
-            get => _arcSegment;
-            set => _arcSegment = value;
-        }
-
-        internal BezierSegment BezierSegment {
-            get => _bezierSegment;
-            set => _bezierSegment = value;
-        }
-
-        internal QuadraticBezierSegment QuadraticBezierSegment {
-            get => _quadraticBezierSegment;
-            set => _quadraticBezierSegment = value;
-        }
-
-        /// <summary>
-        /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
-        /// </summary>
-        internal MathArcSegment MathArcSegment {
-            get => _mathArcSegment;
-            set => _mathArcSegment = value;
-        }
-
-        [FieldOffset(0)]
-        private GeometryElementType _type;
-
-        [FieldOffset(4)]
-        private Vector2 _lineSegment;
-        [FieldOffset(4)]
-        private ArcSegment _arcSegment;
-        [FieldOffset(4)]
-        private BezierSegment _bezierSegment;
-        [FieldOffset(4)]
-        private QuadraticBezierSegment _quadraticBezierSegment;
-        [FieldOffset(4)]
-        private MathArcSegment _mathArcSegment;
-
+    public GeometryElement(Vector2 lineSegment)
+        : this()
+    {
+        Type = GeometryElementType.Line;
+        LineSegment = lineSegment;
     }
+
+    public GeometryElement(ArcSegment arcSegment)
+        : this()
+    {
+        Type = GeometryElementType.Arc;
+        ArcSegment = arcSegment;
+    }
+
+    public GeometryElement(BezierSegment bezierSegment)
+        : this()
+    {
+        Type = GeometryElementType.Bezier;
+        BezierSegment = bezierSegment;
+    }
+
+    public GeometryElement(QuadraticBezierSegment quadraticBezierSegment)
+        : this()
+    {
+        Type = GeometryElementType.QuadraticBezier;
+        QuadraticBezierSegment = quadraticBezierSegment;
+    }
+
+    /// <summary>
+    /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
+    /// </summary>
+    public GeometryElement(MathArcSegment mathArcSegment)
+        : this()
+    {
+        Type = GeometryElementType.MathArc;
+        MathArcSegment = mathArcSegment;
+    }
+
+    [field: FieldOffset(0)]
+    public GeometryElementType Type { get; set; }
+
+    [field: FieldOffset(4)]
+    public Vector2 LineSegment { get; set; }
+
+    [field: FieldOffset(4)]
+    public ArcSegment ArcSegment { get; set; }
+
+    [field: FieldOffset(4)]
+    public BezierSegment BezierSegment { get; set; }
+
+    [field: FieldOffset(4)]
+    public QuadraticBezierSegment QuadraticBezierSegment { get; set; }
+
+    /// <summary>
+    /// Only used for <see cref="EllipseGeometry"/>; don't use it for anything else!
+    /// </summary>
+    [field: FieldOffset(4)]
+    public MathArcSegment MathArcSegment { get; set; }
+
 }

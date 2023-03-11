@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum SweepDirection {
+﻿using JetBrains.Annotations;
 
-        Clockwise = 0,
-        Counterclockwise = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum SweepDirection
+{
+
+    Clockwise = 0,
+    Counterclockwise = 1
+
 }

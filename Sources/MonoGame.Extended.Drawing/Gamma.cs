@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum Gamma {
+﻿using JetBrains.Annotations;
 
-        SRgb = 0,
-        Linear = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum Gamma
+{
+
+    SRgb = 0,
+    Linear = 1
+
 }

@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum FillMode {
+﻿using JetBrains.Annotations;
 
-        Alternate = 0,
-        Winding = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum FillMode
+{
+
+    Alternate = 0,
+    Winding = 1,
+
 }

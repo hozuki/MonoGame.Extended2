@@ -1,35 +1,37 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Audio;
 
 // ReSharper disable once CheckNamespace
-namespace MonoGame.Extended.Framework.Media {
-    partial class VideoPlayer {
+namespace MonoGame.Extended.Framework.Media;
 
-        internal struct DynamicSoundEffectInstanceAccess : IDisposable {
+partial class VideoPlayer
+{
 
-            internal DynamicSoundEffectInstanceAccess([NotNull] VideoPlayer videoPlayer) {
-                _videoPlayer = videoPlayer;
+    internal readonly struct DynamicSoundEffectInstanceAccess : IDisposable
+    {
 
-                Monitor.Enter(videoPlayer._soundEffectInstanceLock);
-            }
+        internal DynamicSoundEffectInstanceAccess(VideoPlayer videoPlayer)
+        {
+            _videoPlayer = videoPlayer;
 
-            [CanBeNull]
-            public DynamicSoundEffectInstance SoundEffect {
-                [DebuggerStepThrough]
-                get => _videoPlayer._soundEffectInstance;
-            }
-
-            public void Dispose() {
-                Monitor.Exit(_videoPlayer._soundEffectInstanceLock);
-            }
-
-            [NotNull]
-            private readonly VideoPlayer _videoPlayer;
-
+            Monitor.Enter(videoPlayer._soundEffectInstanceLock);
         }
 
+        public DynamicSoundEffectInstance? SoundEffect
+        {
+            [DebuggerStepThrough]
+            get => _videoPlayer._soundEffectInstance;
+        }
+
+        public void Dispose()
+        {
+            Monitor.Exit(_videoPlayer._soundEffectInstanceLock);
+        }
+
+        private readonly VideoPlayer _videoPlayer;
+
     }
+
 }

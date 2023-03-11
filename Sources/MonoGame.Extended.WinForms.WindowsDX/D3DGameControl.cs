@@ -1,9 +1,14 @@
-﻿namespace MonoGame.Extended.WinForms.WindowsDX {
-    public class D3DGameControl : GameControl {
+﻿using System.Runtime.Versioning;
 
-        public D3DGameControl() {
-            WindowBackend = new D3DWindowBackend();
-        }
+namespace MonoGame.Extended.WinForms.WindowsDX;
 
+[SupportedOSPlatform("windows7.0")]
+public class D3DGameControl : GameControl
+{
+
+    public D3DGameControl()
+    {
+        WindowBackend = new D3DWindowBackend();
     }
+
 }

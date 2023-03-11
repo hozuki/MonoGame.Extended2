@@ -1,20 +1,27 @@
-﻿using Microsoft.Xna.Framework.Input;
+﻿using System.Runtime.Versioning;
+using Microsoft.Xna.Framework.Input;
 
-namespace Demo.WinForms.WindowsDX.Test {
-    public static class InputManager {
+namespace Demo.WinForms.WindowsDX.Test;
 
-        private static InputManagerImplementation _implementation;
+[SupportedOSPlatform("windows7.0")]
+public static class InputManager
+{
 
-        public static void Initialize(InputManagerImplementation implementation) {
-            _implementation = implementation;
-        }
+    private static InputManagerImplementation _implementation;
 
-        public static KeyboardState GetKeyboardState() {
-            if (_implementation == null)
-                return new KeyboardState();
-
-            return _implementation.GetKeyboardState();
-        }
-
+    public static void Initialize(InputManagerImplementation implementation)
+    {
+        _implementation = implementation;
     }
+
+    public static KeyboardState GetKeyboardState()
+    {
+        if (_implementation is null)
+        {
+            return new KeyboardState();
+        }
+
+        return _implementation.GetKeyboardState();
+    }
+
 }

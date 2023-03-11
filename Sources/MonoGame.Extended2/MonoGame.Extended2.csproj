@@ -4,7 +4,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MonoGame.Extended</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <LangVersion>default</LangVersion>
+    <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>

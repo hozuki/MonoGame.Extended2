@@ -1,7 +1,8 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public interface ISink {
+﻿namespace MonoGame.Extended.Drawing;
 
-        void Close();
+internal interface ISink
+{
 
-    }
+    void Close();
+
 }

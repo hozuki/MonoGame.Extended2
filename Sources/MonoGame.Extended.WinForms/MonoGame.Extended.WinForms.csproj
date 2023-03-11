@@ -4,7 +4,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-    <LangVersion>default</LangVersion>
+    <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <TargetFramework>net6.0-windows</TargetFramework>
   </PropertyGroup>

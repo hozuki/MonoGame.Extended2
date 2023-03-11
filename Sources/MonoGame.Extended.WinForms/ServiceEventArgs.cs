@@ -1,17 +1,17 @@
 ﻿using System;
-using JetBrains.Annotations;
 
-namespace MonoGame.Extended.WinForms {
-    public sealed class ServiceEventArgs : EventArgs {
+namespace MonoGame.Extended.WinForms;
 
-        public ServiceEventArgs([NotNull] Type type) {
-            Guard.ArgumentNotNull(type, nameof(type));
+public sealed class ServiceEventArgs : EventArgs
+{
 
-            ServiceType = type;
-        }
+    public ServiceEventArgs(Type type)
+    {
+        Guard.ArgumentNotNull(type, nameof(type));
 
-        [NotNull]
-        public Type ServiceType { get; }
-
+        ServiceType = type;
     }
+
+    public Type ServiceType { get; }
+
 }

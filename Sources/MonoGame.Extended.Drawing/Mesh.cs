@@ -1,24 +1,33 @@
 ﻿using JetBrains.Annotations;
-using Microsoft.Xna.Framework.Graphics;
 
-namespace MonoGame.Extended.Drawing {
-    public sealed class Mesh : SinkOpener<TessellationSink> {
+namespace MonoGame.Extended.Drawing;
 
-        [CanBeNull]
-        internal Triangle[] Triangles => _triangles;
+[PublicAPI]
+public sealed class Mesh : ISinkOpener<TessellationSink>
+{
 
-        protected override TessellationSink CreateSink() {
-            return new TessellationSink(this);
-        }
+    internal Triangle[]? Triangles { get; private set; }
 
-        protected override void OnSinkClosed(TessellationSink sink) {
-            _triangles = sink.Triangles;
-
-            base.OnSinkClosed(sink);
-        }
-
-        [CanBeNull]
-        private Triangle[] _triangles;
-
+    public TessellationSink Open()
+    {
+        return ((ISinkOpener<TessellationSink>)this).OpenImpl();
     }
+
+    internal void Close(TessellationSink sink)
+    {
+        ((ISinkOpener<TessellationSink>)this).CloseImpl(sink);
+    }
+
+    TessellationSink ISinkOpener<TessellationSink>.CreateSink()
+    {
+        return new TessellationSink(this);
+    }
+
+    void ISinkOpener<TessellationSink>.OnSinkClosed(TessellationSink sink)
+    {
+        Triangles = sink.Triangles;
+    }
+
+    TessellationSink? ISinkOpener<TessellationSink>.ActiveSink { get; set; }
+
 }

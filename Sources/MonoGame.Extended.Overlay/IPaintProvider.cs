@@ -1,11 +1,10 @@
-﻿using JetBrains.Annotations;
-using SkiaSharp;
+﻿using SkiaSharp;
 
-namespace MonoGame.Extended.Overlay {
-    internal interface IPaintProvider {
+namespace MonoGame.Extended.Overlay;
 
-        [NotNull]
-        SKPaint Paint { get; }
+internal interface IPaintProvider
+{
 
-    }
+    SKPaint Paint { get; }
+
 }

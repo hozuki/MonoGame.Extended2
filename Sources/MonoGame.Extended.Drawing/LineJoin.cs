@@ -1,10 +1,14 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum LineJoin {
+﻿using JetBrains.Annotations;
 
-        Miter = 0,
-        Bevel = 1,
-        Round = 2,
-        MiterOrBevel = 3
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum LineJoin
+{
+
+    Miter = 0,
+    Bevel = 1,
+    Round = 2,
+    MiterOrBevel = 3,
+
 }

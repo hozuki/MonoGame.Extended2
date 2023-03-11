@@ -1,38 +1,45 @@
-﻿using System;
+﻿using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing.Geometries {
-    public sealed class EllipseGeometry : Geometry {
+namespace MonoGame.Extended.Drawing.Geometries;
 
-        public EllipseGeometry(Ellipse ellipse) {
-            _ellipse = ellipse;
-            InitializeShape();
-        }
+[PublicAPI]
+public sealed class EllipseGeometry : Geometry
+{
 
-        public override GeometrySink Open() {
-            throw new NotSupportedException();
-        }
+    public EllipseGeometry(Ellipse ellipse)
+    {
+        _ellipse = ellipse;
+        Figures = CreateFigures(in ellipse);
+    }
 
-        private void InitializeShape() {
-            var ellipse = _ellipse;
-            var sink = base.Open();
+    private protected override FigureBatch Figures { get; }
 
-            var pt = ellipse.Point + new Vector2(ellipse.RadiusX, 0);
+    private static FigureBatch CreateFigures(in Ellipse ellipse)
+    {
+        var sink = new SimplifiedGeometrySink();
 
-            sink.BeginFigure(pt);
-            sink.AddMathArc(new MathArcSegment {
+        var pt = ellipse.Point + new Vector2(ellipse.RadiusX, 0);
+
+        sink.BeginFigure(pt, FigureBegin.Filled);
+        {
+            var segment = new MathArcSegment
+            {
                 Center = ellipse.Point,
                 Radius = new Vector2(ellipse.RadiusX, ellipse.RadiusY),
                 RotationAngle = 0,
                 StartAngle = 0,
-                SweepAngle = 360
-            });
-            sink.EndFigure(FigureEnd.Closed);
-
-            sink.Close();
+                SweepAngle = 360,
+            };
+            sink.AddMathArc(segment);
         }
+        sink.EndFigure(FigureEnd.Closed);
 
-        private readonly Ellipse _ellipse;
+        sink.Close();
 
+        return sink.GetFigureBatch();
     }
+
+    private readonly Ellipse _ellipse;
+
 }

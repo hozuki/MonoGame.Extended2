@@ -1,8 +1,12 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum ArcSize {
+﻿using JetBrains.Annotations;
 
-        Small = 0,
-        Large = 1
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum ArcSize
+{
+
+    Small = 0,
+    Large = 1,
+
 }

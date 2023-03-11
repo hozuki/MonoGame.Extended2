@@ -1,25 +1,29 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using Microsoft.Xna.Framework;
 
-namespace Demo.WinForms.WindowsDX.Test {
-    internal class Ball {
-        private static Random _rand = new Random();
+namespace Demo.WinForms.WindowsDX.Test;
 
-        public float Radius { get; set; }
-        public Vector2 Position { get; set; }
-        public Vector2 Direction { get; set; }
+[SupportedOSPlatform("windows7.0")]
+internal class Ball
+{
 
-        public void Randomize(Rectangle viewport) {
-            Position = new Vector2(
-                (float)_rand.NextDouble() * (viewport.Width - Radius * 2) + Radius,
-                (float)_rand.NextDouble() * (viewport.Height - Radius * 2) + Radius);
-            Direction = new Vector2((float)_rand.NextDouble(), (float)_rand.NextDouble());
-            Direction.Normalize();
-            Direction *= ((float)_rand.NextDouble() * 240 + 60);
-        }
+    private static readonly Random Rand = new Random();
 
-        public Rectangle Bounds {
-            get { return new Rectangle((int)(Position.X - Radius), (int)(Position.Y - Radius), (int)(Radius * 2), (int)(Radius * 2)); }
-        }
+    public float Radius { get; set; }
+    public Vector2 Position { get; set; }
+    public Vector2 Direction { get; set; }
+
+    public void Randomize(Rectangle viewport)
+    {
+        Position = new Vector2(
+            (float)Rand.NextDouble() * (viewport.Width - Radius * 2) + Radius,
+            (float)Rand.NextDouble() * (viewport.Height - Radius * 2) + Radius);
+        Direction = new Vector2((float)Rand.NextDouble(), (float)Rand.NextDouble());
+        Direction.Normalize();
+        Direction *= ((float)Rand.NextDouble() * 240 + 60);
     }
+
+    public Rectangle Bounds => new((int)(Position.X - Radius), (int)(Position.Y - Radius), (int)(Radius * 2), (int)(Radius * 2));
+
 }

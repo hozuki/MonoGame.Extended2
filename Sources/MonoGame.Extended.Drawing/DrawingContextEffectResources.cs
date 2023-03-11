@@ -1,17 +1,18 @@
-﻿using JetBrains.Annotations;
-using MonoGame.Extended.Drawing.Effects;
+﻿using MonoGame.Extended.Drawing.Effects;
 
-namespace MonoGame.Extended.Drawing {
-    internal sealed class DrawingContextEffectResources {
+namespace MonoGame.Extended.Drawing;
 
-        internal DrawingContextEffectResources([NotNull] DrawingContext drawingContext) {
-            SolidColorBrush = EffectResource.CreateSolidColorBrushEffectResource(drawingContext);
-            LinearGradientBrush = EffectResource.CreateLinearGradientBrushEffectResource(drawingContext);
-        }
+internal sealed class DrawingContextEffectResources
+{
 
-        internal EffectResource SolidColorBrush { get; }
-
-        internal EffectResource LinearGradientBrush { get; }
-
+    internal DrawingContextEffectResources(DrawingContext drawingContext)
+    {
+        SolidColorBrush = EffectResource.CreateSolidColorBrushEffectResource(drawingContext);
+        LinearGradientBrush = EffectResource.CreateLinearGradientBrushEffectResource(drawingContext);
     }
+
+    internal EffectResource SolidColorBrush { get; }
+
+    internal EffectResource LinearGradientBrush { get; }
+
 }

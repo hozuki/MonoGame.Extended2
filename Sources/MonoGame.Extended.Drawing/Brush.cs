@@ -1,52 +1,65 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using EffectLoaderFunc = System.Func<MonoGame.Extended.Drawing.DrawingContext, (Microsoft.Xna.Framework.Graphics.Effect Effect, bool IsShared)>;
+using MonoGame.Extended.Drawing.Effects;
 
-namespace MonoGame.Extended.Drawing {
-    public abstract class Brush : DisposableBase {
+namespace MonoGame.Extended.Drawing;
 
-        protected Brush([NotNull] DrawingContext context, [NotNull] EffectLoaderFunc effectLoaderFunc, BrushProperties brushProperties) {
-            Guard.ArgumentNotNull(context, nameof(context));
-            Guard.ArgumentNotNull(effectLoaderFunc, nameof(effectLoaderFunc));
+[PublicAPI]
+public abstract class Brush : DisposableBase
+{
 
-            DrawingContext = context;
-            BrushProperties = brushProperties;
+    private protected Brush(DrawingContext context, Func<DrawingContext, EffectLoadingResult> effectLoaderFunc, BrushProperties brushProperties)
+    {
+        Guard.ArgumentNotNull(context, nameof(context));
+        Guard.ArgumentNotNull(effectLoaderFunc, nameof(effectLoaderFunc));
 
-            (_brushEffect, _isEffectShared) = effectLoaderFunc(context);
-        }
+        DrawingContext = context;
+        BrushProperties = brushProperties;
 
-        public BrushProperties BrushProperties { get; }
+        (_brushEffect, _isEffectShared) = effectLoaderFunc(context);
+    }
 
-        internal void Render([NotNull] Triangle[] triangles, [CanBeNull] Matrix3x2? transform) {
+    public BrushProperties BrushProperties { get; }
+
+    internal void Render(Triangle[] triangles, Matrix3x2? transform)
+    {
+        if (triangles.Length > 0)
+        {
             RenderInternal(triangles, _brushEffect, transform);
         }
-
-        internal DrawingContext DrawingContext { get; }
-
-        protected abstract void RenderInternal([NotNull] Triangle[] triangles, [NotNull] Effect effect, [CanBeNull] Matrix3x2? transform);
-
-        protected override void Dispose(bool disposing) {
-            if (!_isEffectShared) {
-                _brushEffect?.Dispose();
-            }
-
-            _brushEffect = null;
-        }
-
-        protected static readonly RasterizerState DefaultBrushRasterizerState = new RasterizerState {
-            CullMode = CullMode.None,
-            MultiSampleAntiAlias = true,
-        };
-
-        protected static readonly DepthStencilState DefaultBrushDepthStencilState = new DepthStencilState {
-            DepthBufferEnable = false,
-            DepthBufferFunction = CompareFunction.Always,
-            DepthBufferWriteEnable = true
-        };
-
-        private Effect _brushEffect;
-        private readonly bool _isEffectShared;
-
     }
+
+    internal DrawingContext DrawingContext { get; }
+
+    protected abstract void RenderInternal(Triangle[] triangles, Effect effect, Matrix3x2? transform);
+
+    protected override void Dispose(bool disposing)
+    {
+        if (!_isEffectShared)
+        {
+            if (disposing)
+            {
+                _brushEffect.Dispose();
+            }
+        }
+    }
+
+    protected static readonly RasterizerState DefaultBrushRasterizerState = new()
+    {
+        CullMode = CullMode.None,
+        MultiSampleAntiAlias = true,
+    };
+
+    protected static readonly DepthStencilState DefaultBrushDepthStencilState = new()
+    {
+        DepthBufferEnable = false,
+        DepthBufferFunction = CompareFunction.Always,
+        DepthBufferWriteEnable = true,
+    };
+
+    private readonly Effect _brushEffect;
+    private readonly bool _isEffectShared;
+
 }

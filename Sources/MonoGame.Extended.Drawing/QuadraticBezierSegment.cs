@@ -1,11 +1,14 @@
-﻿using Microsoft.Xna.Framework;
+﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework;
 
-namespace MonoGame.Extended.Drawing {
-    public struct QuadraticBezierSegment {
+namespace MonoGame.Extended.Drawing;
 
-        public Vector2 Point1 { get; set; }
+[PublicAPI]
+public struct QuadraticBezierSegment
+{
 
-        public Vector2 Point2 { get; set; }
+    public Vector2 Point1 { get; set; }
 
-    }
+    public Vector2 Point2 { get; set; }
+
 }

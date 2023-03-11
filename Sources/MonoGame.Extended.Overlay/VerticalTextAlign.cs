@@ -1,9 +1,10 @@
-namespace MonoGame.Extended.Overlay {
-    public enum VerticalTextAlign {
+namespace MonoGame.Extended.Overlay;
 
-        Top = 0,
-        Middle = 1,
-        Bottom = 2
+public enum VerticalTextAlign
+{
 
-    }
+    Top = 0,
+    Middle = 1,
+    Bottom = 2
+
 }

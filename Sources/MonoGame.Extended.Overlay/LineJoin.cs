@@ -1,9 +1,10 @@
-﻿namespace MonoGame.Extended.Overlay {
-    public enum LineJoin {
+﻿namespace MonoGame.Extended.Overlay;
 
-        Round = 0,
-        Bevel = 1,
-        Miter = 2
+public enum LineJoin
+{
 
-    }
+    Round = 0,
+    Bevel = 1,
+    Miter = 2
+
 }

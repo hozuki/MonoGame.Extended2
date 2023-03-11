@@ -1,19 +1,19 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace MonoGame.Extended.WinForms {
-    public interface IWindowBackend : IDisposable {
+namespace MonoGame.Extended.WinForms;
 
-        void Initialize([NotNull] GraphicsDeviceControl control, PresentInterval presentInterval);
+public interface IWindowBackend : IDisposable
+{
 
-        void PrepareDraw([NotNull] GraphicsDeviceControl control);
+    void Initialize(GraphicsDeviceControl control, PresentInterval presentInterval);
 
-        void BeginDraw([NotNull] GraphicsDeviceControl control);
+    void PrepareDraw(GraphicsDeviceControl control);
 
-        void EndDraw([NotNull] GraphicsDeviceControl control);
+    void BeginDraw(GraphicsDeviceControl control);
 
-        void OnWindowSizeChanged([NotNull] GraphicsDeviceControl control);
+    void EndDraw(GraphicsDeviceControl control);
 
-    }
+    void OnWindowSizeChanged(GraphicsDeviceControl control);
+
 }

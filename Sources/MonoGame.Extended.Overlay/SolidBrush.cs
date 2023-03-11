@@ -2,24 +2,26 @@
 using MonoGame.Extended.Overlay.Extensions;
 using SkiaSharp;
 
-namespace MonoGame.Extended.Overlay {
-    public sealed class SolidBrush : Brush {
+namespace MonoGame.Extended.Overlay;
 
-        public SolidBrush(Color color) {
-            Color = color;
+public sealed class SolidBrush : Brush
+{
 
-            var paint = new SKPaint();
+    public SolidBrush(Color color)
+    {
+        Color = color;
 
-            paint.Color = color.ToSKColor();
-            paint.IsAntialias = true;
-            paint.IsStroke = false;
+        var paint = new SKPaint();
 
-            Paint = paint;
-        }
+        paint.Color = color.ToSKColor();
+        paint.IsAntialias = true;
+        paint.IsStroke = false;
 
-        public Color Color { get; }
-
-        internal override SKPaint Paint { get; }
-
+        Paint = paint;
     }
+
+    public Color Color { get; }
+
+    internal override SKPaint Paint { get; }
+
 }

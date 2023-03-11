@@ -1,10 +1,14 @@
-﻿namespace MonoGame.Extended.Drawing {
-    public enum CapStyle {
+﻿using JetBrains.Annotations;
 
-        Flat = 0,
-        Square = 1,
-        Round = 2,
-        Triangle = 3
+namespace MonoGame.Extended.Drawing;
 
-    }
+[PublicAPI]
+public enum CapStyle
+{
+
+    Flat = 0,
+    Square = 1,
+    Round = 2,
+    Triangle = 3,
+
 }

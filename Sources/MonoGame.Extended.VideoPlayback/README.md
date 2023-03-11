@@ -105,7 +105,9 @@ The test video is downloaded from [sample-videos.com](http://www.sample-videos.c
 
 ## Known Limitation(s)
 
-- Running on different platforms. [FFmpeg.AutoGen](https://github.com/Ruslan-B/FFmpeg.AutoGen) can target .NET Framework (≥ 4.5) or .NET Standard (≥ 2.0). However, when targeting .NET Framework, it [forces loading FFmpeg native libraries by calling `LoadLibrary`](https://github.com/Ruslan-B/FFmpeg.AutoGen/blob/9e1dbffb70843eed62c0be5074da1e024da44622/FFmpeg.AutoGen/Native/LibraryLoader.cs). This makes it impossible to run on vanilla Mono, though it does provide a library mapping file. If you want to run the example on other platforms, please use [Wine](https://www.winehq.org/download) (with [wine-mono](https://wiki.winehq.org/Mono) installed) to launch. The code in MonoGame.Extended.VideoPlayback is compatible with both .NET Framework 4.5 and .NET Core 2.0, but I cannot publish a .NET Core application... :disappointed:
+<del>- Running on different platforms. [FFmpeg.AutoGen](https://github.com/Ruslan-B/FFmpeg.AutoGen) can target .NET Framework (≥ 4.5) or .NET Standard (≥ 2.0). However, when targeting .NET Framework, it [forces loading FFmpeg native libraries by calling `LoadLibrary`](https://github.com/Ruslan-B/FFmpeg.AutoGen/blob/9e1dbffb70843eed62c0be5074da1e024da44622/FFmpeg.AutoGen/Native/LibraryLoader.cs). This makes it impossible to run on vanilla Mono, though it does provide a library mapping file. If you want to run the example on other platforms, please use [Wine](https://www.winehq.org/download) (with [wine-mono](https://wiki.winehq.org/Mono) installed) to launch. The code in MonoGame.Extended.VideoPlayback is compatible with both .NET Framework 4.5 and .NET Core 2.0, but I cannot publish a .NET Core application... :disappointed:</del>
+
+With .NET 6.0 plus `Sdcb.FFmpeg` the problems above are solved! :tada:
 
 ## Building
 

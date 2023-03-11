@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define TEST_WMV_FILE
+
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -60,8 +62,11 @@ public sealed class Game1 : Game
 
         _helpTexture = TextureLoader.LoadTexture(GraphicsDevice, "Content/HelpTexture.png");
 
+#if TEST_WMV_FILE
+        _video = VideoHelper.LoadFromFile(@"C:\Users\MIC\Desktop\GameVideo\GameVideo\GameVideo\Content\Clip1.wmv");
+#else
         _video = VideoHelper.LoadFromFile(@"Content/SampleVideo_1280x720_1mb.mp4");
-        // _video = VideoHelper.LoadFromFile(@"C:\Users\MIC\Desktop\GameVideo\GameVideo\GameVideo\Content\Clip1.wmv");
+#endif
 
         _videoPlayer.Play(_video);
     }

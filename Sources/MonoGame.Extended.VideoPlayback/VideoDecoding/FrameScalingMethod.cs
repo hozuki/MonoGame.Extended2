@@ -1,4 +1,4 @@
-﻿using FFmpeg.AutoGen;
+﻿using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback.VideoDecoding;
 
@@ -16,57 +16,57 @@ public enum FrameScalingMethod
     /// <summary>
     /// Use fast bilinear interpolation.
     /// </summary>
-    FastBilinear = ffmpeg.SWS_FAST_BILINEAR,
+    FastBilinear = (int)SWS.FastBilinear,
 
     /// <summary>
     /// Use bilinear interpolation.
     /// </summary>
-    Bilinear = ffmpeg.SWS_BILINEAR,
+    Bilinear = (int)SWS.Bilinear,
 
     /// <summary>
     /// Use bicubic interpolation.
     /// </summary>
-    Bicubic = ffmpeg.SWS_BICUBIC,
+    Bicubic = (int)SWS.Bicubic,
 
     /// <summary>
     /// Use experimental algorithm.
     /// The meaning is taken from <code>https://ffmpeg.org/ffmpeg-scaler.html</code>.
     /// </summary>
-    Experimental = ffmpeg.SWS_X,
+    Experimental = (int)SWS.X,
 
     /// <summary>
     /// Use neighbor approximation.
     /// </summary>
-    Neighbor = ffmpeg.SWS_POINT,
+    Neighbor = (int)SWS.Point,
 
     /// <summary>
     /// Use area averaging.
     /// </summary>
-    Area = ffmpeg.SWS_AREA,
+    Area = (int)SWS.Area,
 
     /// <summary>
     /// Use bicubic interpolation for luma and bilinear for chroma.
     /// </summary>
-    BicubicLinear = ffmpeg.SWS_BICUBLIN,
+    BicubicLinear = (int)SWS.Bicublin,
 
     /// <summary>
     /// Use Gaussian rescaling.
     /// </summary>
-    Gauss = ffmpeg.SWS_GAUSS,
+    Gauss = (int)SWS.Gauss,
 
     /// <summary>
     /// Use sinc rescaling.
     /// </summary>
-    Sinc = ffmpeg.SWS_SINC,
+    Sinc = (int)SWS.Sinc,
 
     /// <summary>
     /// Use Lanczos filter for rescaling.
     /// </summary>
-    Lanczos = ffmpeg.SWS_LANCZOS,
+    Lanczos = (int)SWS.Lanczos,
 
     /// <summary>
     /// Use natural bicubic spline interpolation.
     /// </summary>
-    Spline = ffmpeg.SWS_SPLINE
+    Spline = (int)SWS.Spline,
 
 }

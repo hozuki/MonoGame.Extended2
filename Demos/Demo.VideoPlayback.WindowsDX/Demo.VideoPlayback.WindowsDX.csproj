@@ -41,5 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303" />
+    <PackageReference Include="Sdcb.FFmpeg.runtime.windows-x64" Version="5.1.2" />
   </ItemGroup>
 </Project>

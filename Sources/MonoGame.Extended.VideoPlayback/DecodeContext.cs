@@ -6,11 +6,12 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
-using FFmpeg.AutoGen;
 using Microsoft.Xna.Framework.Audio;
+using MonoGame.Extended.Framework.Media;
 using MonoGame.Extended.VideoPlayback.AudioDecoding;
 using MonoGame.Extended.VideoPlayback.Extensions;
 using MonoGame.Extended.VideoPlayback.VideoDecoding;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback;
 
@@ -48,7 +49,7 @@ internal sealed unsafe class DecodeContext : DisposableBase
     /// This event MUST be raised asynchronously.
     /// The reason is that subscribers (i.e. <see cref="Framework.Media.Video.decodeContext_Ended"/>) may raise their events synchronously.
     /// The call flow can go to <see cref="Framework.Media.VideoPlayer.video_Ended"/>, where <see cref="Framework.Media.VideoPlayer.Stop"/> is called.
-    /// Inside <see cref="Framework.Media.VideoPlayer.Stop"/>, it calls <see cref="Thread.Join()"/> on <see cref="Framework.Media.VideoPlayer.DecodingThread.SystemThread"/>,
+    /// Inside <see cref="Framework.Media.VideoPlayer.Stop"/>, it calls <see cref="Thread.Join()"/> on <see cref="DecodingThread.SystemThread"/>,
     /// which waits for the decoding thread that raises the initial <see cref="Ended"/> event infinitely.
     /// So you see, there will be a dead lock if <see cref="Ended"/> is raised synchronously.
     /// </remarks>
@@ -229,7 +230,7 @@ internal sealed unsafe class DecodeContext : DisposableBase
         {
             var avStream = _formatContext->streams[i];
 
-            if (avStream->codecpar->codec_type == AVMediaType.AVMEDIA_TYPE_VIDEO)
+            if (avStream->codecpar->codec_type == AVMediaType.Video)
             {
                 ++count;
             }
@@ -250,7 +251,7 @@ internal sealed unsafe class DecodeContext : DisposableBase
         {
             var avStream = _formatContext->streams[i];
 
-            if (avStream->codecpar->codec_type == AVMediaType.AVMEDIA_TYPE_AUDIO)
+            if (avStream->codecpar->codec_type == AVMediaType.Audio)
             {
                 ++count;
             }
@@ -332,7 +333,7 @@ internal sealed unsafe class DecodeContext : DisposableBase
             // But using the index -1 (seeking all streams at the same time) works...
             if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0)
             {
-                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, 0, ffmpeg.AVSEEK_FLAG_BACKWARD), Dispose);
+                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, 0, (int)AVSEEK_FLAG.Backward), Dispose);
             }
 
             ResetAfterSeek();
@@ -382,17 +383,17 @@ internal sealed unsafe class DecodeContext : DisposableBase
                 ResetBeforeSeek();
             }
 
-            var seekFlags = 0 & ffmpeg.AVSEEK_FLAG_ANY;
+            AVSEEK_FLAG seekFlags = 0;
 
             if (_nextDecodingVideoTime > timeInSeconds)
             {
-                seekFlags |= ffmpeg.AVSEEK_FLAG_BACKWARD;
+                seekFlags |= AVSEEK_FLAG.Backward;
             }
 
             if (VideoStreamIndex >= 0 || AudioStreamIndex >= 0)
             {
                 var timestamp = FFmpegHelper.ConvertSecondsToPts(timeInSeconds);
-                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, timestamp, seekFlags), Dispose);
+                FFmpegHelper.Verify(ffmpeg.av_seek_frame(FormatContext, -1, timestamp, (int)seekFlags), Dispose);
             }
 
             if (pseudoReset)
@@ -1174,13 +1175,13 @@ internal sealed unsafe class DecodeContext : DisposableBase
         AVCodec* audioCodec = null;
 
         // 4. Search for video and audio streams.
-        _videoStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.AVMEDIA_TYPE_VIDEO, _userSelectedVideoStreamIndex, -1, &videoCodec, 0);
+        _videoStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.Video, _userSelectedVideoStreamIndex, -1, &videoCodec, 0);
         if (videoCodec != null && _videoStreamIndex != ffmpeg.AVERROR_STREAM_NOT_FOUND)
         {
             var avStream = formatContext->streams[_videoStreamIndex];
 
             // 5. If this is a video stream, create a VideoDecodingContext from it...
-            videoContext = new VideoDecodingContext(formatContext, videoCodec, avStream, decodingOptions);
+            videoContext = new VideoDecodingContext(videoCodec, avStream, decodingOptions);
 
             // ... and record its start time.
             if (isAsfContainerStartTimeFixed)
@@ -1227,13 +1228,13 @@ internal sealed unsafe class DecodeContext : DisposableBase
             _videoStreamIndex = -1;
         }
 
-        _audioStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.AVMEDIA_TYPE_AUDIO, _userSelectedAudioStreamIndex, -1, &audioCodec, 0);
+        _audioStreamIndex = ffmpeg.av_find_best_stream(formatContext, AVMediaType.Audio, _userSelectedAudioStreamIndex, -1, &audioCodec, 0);
         if (audioCodec != null && _audioStreamIndex != ffmpeg.AVERROR_STREAM_NOT_FOUND)
         {
             var avStream = formatContext->streams[_audioStreamIndex];
 
             // 6. If this is an audio stream, create an AudioDecodingContext from it...
-            audioContext = new AudioDecodingContext(formatContext, audioCodec, avStream);
+            audioContext = new AudioDecodingContext(audioCodec, avStream);
 
             // ... and record its start time.
             if (!isAsfContainer)

@@ -1,6 +1,6 @@
 # https://www.appveyor.com/docs/appveyor-yml/
 
-version: 0.1.1.{build}
+version: 0.1.2.{build}
 image: Visual Studio 2022
 environment:
   Configuration: Release

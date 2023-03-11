@@ -659,7 +659,7 @@ public sealed partial class VideoPlayer : DisposableBase
             stopwatch.Reset();
             stopwatch.Start();
 
-            decodingThread.Start();
+            decodingThread.Start(video);
             se.Play();
         }
     }

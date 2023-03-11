@@ -43,12 +43,14 @@ internal sealed class DecodingThread
 
     /// <summary>
     /// Starts the underlying <see cref="Thread"/>.
+    /// <param name="video">The <see cref="Video"/> to play.</param>
     /// </summary>
-    internal void Start()
+    internal void Start(Video video)
     {
         if ((SystemThread.ThreadState & System.Threading.ThreadState.Unstarted) != 0)
         {
-            SystemThread.Start();
+            var p = new DecodingThreadStartParams(this, video);
+            SystemThread.Start(p);
         }
     }
 
@@ -78,7 +80,7 @@ internal sealed class DecodingThread
 
 #if DEBUG
     /// <summary>
-    /// When the thread surprisingly exited, retrieves the cause.
+    /// When the thread unexpectedly exited, retrieves the cause.
     /// </summary>
     internal Exception? ExitCause
     {
@@ -90,15 +92,18 @@ internal sealed class DecodingThread
     /// <summary>
     /// Worker thread procedure.
     /// </summary>
-    private void ThreadProc()
+    private static void ThreadProc(object? obj)
     {
+        var p = (DecodingThreadStartParams)obj!;
+        var self = p.Worker;
+        var video = p.Video;
+
         try
         {
-            var videoPlayer = _videoPlayer;
-            var video = videoPlayer.Video;
-            var interval = _playerOptions.DecodingThreadSleepInterval;
+            var videoPlayer = self._videoPlayer;
+            var interval = self._playerOptions.DecodingThreadSleepInterval;
 
-            while (_continueWorking)
+            while (self._continueWorking)
             {
                 switch (videoPlayer.State)
                 {
@@ -141,7 +146,7 @@ internal sealed class DecodingThread
 
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(videoPlayer.State), videoPlayer.State, null);
                 }
 
                 Thread.Sleep(interval);
@@ -149,13 +154,13 @@ internal sealed class DecodingThread
 
             video.DecodeContext?.Reset();
 
-            _exceptionalExit = false;
+            self._exceptionalExit = false;
         }
         catch (Exception ex)
         {
-            _exceptionalExit = true;
+            self._exceptionalExit = true;
 #if DEBUG
-            _exitCause = ex;
+            self._exitCause = ex;
 #endif
 
             // Here is a trick to raise an exception from a worker thread with a correct stack trace.
@@ -166,8 +171,23 @@ internal sealed class DecodingThread
             // So we have to wrap another exception, e.g. ApplicationException.
             // And then when the ApplicationException in the main thread is caught (see AppDomain.UnhandledException event),
             // use its InnerException property to get the real exception, and the correct source location.
-            _mainThreadSynchronizationContext.Post(_ => throw new ApplicationException(ex.Message, ex), null);
+            self._mainThreadSynchronizationContext.Post(_ => throw new ApplicationException(ex.Message, ex), null);
         }
+    }
+
+    private sealed class DecodingThreadStartParams
+    {
+
+        public DecodingThreadStartParams(DecodingThread worker, Video video)
+        {
+            Worker = worker;
+            Video = video;
+        }
+
+        public DecodingThread Worker { get; }
+
+        public Video Video { get; }
+
     }
 
     private bool? _exceptionalExit;
@@ -178,7 +198,7 @@ internal sealed class DecodingThread
 
     private readonly SynchronizationContext _mainThreadSynchronizationContext;
 
-    private bool _continueWorking = true;
+    private volatile bool _continueWorking = true;
 
     private readonly VideoPlayer _videoPlayer;
 

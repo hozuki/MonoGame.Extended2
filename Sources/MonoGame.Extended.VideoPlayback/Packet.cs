@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using FFmpeg.AutoGen;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback;
 

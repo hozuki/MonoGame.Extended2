@@ -3,11 +3,11 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using FFmpeg.AutoGen;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended.Framework.Media;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback;
 
@@ -18,26 +18,26 @@ internal static unsafe class FFmpegHelper
 {
 
     /// <summary>
-    /// Required output format for <see cref="ffmpeg.sws_scale"/> (<see cref="AVPixelFormat.AV_PIX_FMT_RGB0"/>).
+    /// Required output format for <see cref="ffmpeg.sws_scale"/> (<see cref="AVPixelFormat.Rgb0"/>).
     /// This value correspond to the default texture surface format (<see cref="SurfaceFormat.Color"/>) in MonoGame.
     /// </summary>
     /// <seealso cref="VideoPlayer.RequiredSurfaceFormat"/>
-    internal const AVPixelFormat RequiredPixelFormat = AVPixelFormat.AV_PIX_FMT_RGB0;
+    internal const AVPixelFormat RequiredPixelFormat = AVPixelFormat.Rgb0;
 
     /// <summary>
-    /// Required output format for <see cref="ffmpeg.swr_convert"/> (<see cref="AVSampleFormat.AV_SAMPLE_FMT_S16"/>).
+    /// Required output format for <see cref="ffmpeg.swr_convert(SwrContext*, byte**, int, byte**, int)"/> (<see cref="AVSampleFormat.S16"/>).
     /// This sample format fits <see cref="ALFormat.Stereo16"/>.
     /// </summary>
-    internal const AVSampleFormat RequiredSampleFormat = AVSampleFormat.AV_SAMPLE_FMT_S16;
+    internal const AVSampleFormat RequiredSampleFormat = AVSampleFormat.S16;
 
     /// <summary>
-    /// Required number of channels of the output for <see cref="ffmpeg.swr_convert"/>.
+    /// Required number of channels of the output for <see cref="ffmpeg.swr_convert(SwrContext*, byte**, int, byte**, int)"/>.
     /// This channel count fits <see cref="ALFormat.Stereo16"/>.
     /// </summary>
     internal const int RequiredChannels = 2;
 
     /// <summary>
-    /// Required sample rate for <see cref="ffmpeg.swr_convert"/>, in Hz.
+    /// Required sample rate for <see cref="ffmpeg.swr_convert(SwrContext*, byte**, int, byte**, int)"/>, in Hz.
     /// It can be other frequencies, such as 22050, 32000, 48000, 96000, etc.
     /// Considering that most of the devices support 44100 Hz output and the quality is reasonable, the sample rate is chosen as 44100 Hz.
     /// </summary>
@@ -154,7 +154,7 @@ internal static unsafe class FFmpegHelper
         // The standard way is use AV_TIMEBASE_Q and av_rescale_q().
         // Well, that may be not necessary unless there is another breaking change of this in FFmpeg.
         var timeBase = stream->time_base;
-        var result = (double)pts * timeBase.num / timeBase.den;
+        var result = (double)pts * timeBase.Num / timeBase.Den;
 
         return result;
     }
@@ -174,7 +174,7 @@ internal static unsafe class FFmpegHelper
         }
 
         var timeBase = stream->time_base;
-        var result = (long)Math.Round(seconds * timeBase.den / timeBase.num);
+        var result = (long)Math.Round(seconds * timeBase.Den / timeBase.Num);
 
         return result;
     }
@@ -331,7 +331,7 @@ internal static unsafe class FFmpegHelper
             // Perform scaling (if needed) and pixel format conversion (if needed), and copy the data to our buffer.
             // Thanks @Slow for pointing out the return value of sws_scale.
             // This contributes to the correct version of Verify() method. I should have read the docs more carefully.
-            Verify(ffmpeg.sws_scale(scaleContext, videoFrame->data, videoFrame->linesize, 0, videoContext.CodecContext->height, dstData, dstStride));
+            Verify(ffmpeg.sws_scale(scaleContext, videoFrame->data.ToRawArray(), videoFrame->linesize.ToArray(), 0, videoContext.CodecContext->height, dstData, dstStride));
         }
 
         return true;
@@ -370,7 +370,7 @@ internal static unsafe class FFmpegHelper
         var resampleContext = audioContext.GetSuitableResampleContext(dstSampleFormat, dstChannels, dstSampleRate);
 
         // First roughly estimates the number of samples in the output data.
-        var roughDstSampleCount = (int)ffmpeg.av_rescale_rnd(frame->nb_samples, dstSampleRate, audioContext.SampleRate, AVRounding.AV_ROUND_UP);
+        var roughDstSampleCount = (int)ffmpeg.av_rescale_rnd(frame->nb_samples, dstSampleRate, audioContext.SampleRate, AVRounding.Up);
 
         if (roughDstSampleCount < 0)
         {
@@ -395,7 +395,7 @@ internal static unsafe class FFmpegHelper
 
             // Then consider the possible resample delay and calculate the correct number of samples.
             // TODO: Isn't this redundant? We may use this value in the first place.
-            dstSampleCount = (int)ffmpeg.av_rescale_rnd(ffmpeg.swr_get_delay(resampleContext, audioContext.SampleRate) + frame->nb_samples, dstSampleRate, audioContext.SampleRate, AVRounding.AV_ROUND_UP);
+            dstSampleCount = (int)ffmpeg.av_rescale_rnd(ffmpeg.swr_get_delay(resampleContext, audioContext.SampleRate) + frame->nb_samples, dstSampleRate, audioContext.SampleRate, AVRounding.Up);
 
             if (dstSampleCount <= 0)
             {
@@ -413,7 +413,7 @@ internal static unsafe class FFmpegHelper
                 Verify(ffmpeg.av_samples_alloc(dstData, &dstLineSize, dstChannels, dstSampleCount, dstSampleFormat, 1));
             }
 
-            var ptrs = frame->data.ToArray();
+            var ptrs = frame->data.ToRawArray();
             int convertRet;
 
             // Next, resample.

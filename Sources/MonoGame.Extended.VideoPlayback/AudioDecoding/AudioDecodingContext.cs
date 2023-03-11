@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FFmpeg.AutoGen;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback.AudioDecoding;
 
@@ -15,10 +15,9 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
     /// <summary>
     /// Creates a new <see cref="AudioDecodingContext"/> instance.
     /// </summary>
-    /// <param name="formatContext">Format context.</param>
     /// <param name="audioCodec">Audio codec.</param>
     /// <param name="audioStream">The audio stream.</param>
-    internal AudioDecodingContext([NotNull] AVFormatContext* formatContext, [NotNull] AVCodec* audioCodec, [NotNull] AVStream* audioStream)
+    internal AudioDecodingContext([NotNull] AVCodec* audioCodec, [NotNull] AVStream* audioStream)
     {
         // https://riptutorial.com/ffmpeg/example/30961/open-a-codec-context
         var codecContext = ffmpeg.avcodec_alloc_context3(audioCodec);
@@ -77,21 +76,21 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
 
             switch (_codecContext->sample_fmt)
             {
-                case AVSampleFormat.AV_SAMPLE_FMT_U8:
-                case AVSampleFormat.AV_SAMPLE_FMT_U8P:
+                case AVSampleFormat.U8:
+                case AVSampleFormat.U8p:
                     return 8;
-                case AVSampleFormat.AV_SAMPLE_FMT_S16:
-                case AVSampleFormat.AV_SAMPLE_FMT_S16P:
+                case AVSampleFormat.S16:
+                case AVSampleFormat.S16p:
                     return 16;
-                case AVSampleFormat.AV_SAMPLE_FMT_S32:
-                case AVSampleFormat.AV_SAMPLE_FMT_S32P:
-                case AVSampleFormat.AV_SAMPLE_FMT_FLT:
-                case AVSampleFormat.AV_SAMPLE_FMT_FLTP:
+                case AVSampleFormat.S32:
+                case AVSampleFormat.S32p:
+                case AVSampleFormat.Flt:
+                case AVSampleFormat.Fltp:
                     return 32;
-                case AVSampleFormat.AV_SAMPLE_FMT_S64:
-                case AVSampleFormat.AV_SAMPLE_FMT_S64P:
-                case AVSampleFormat.AV_SAMPLE_FMT_DBL:
-                case AVSampleFormat.AV_SAMPLE_FMT_DBLP:
+                case AVSampleFormat.S64:
+                case AVSampleFormat.S64p:
+                case AVSampleFormat.Dbl:
+                case AVSampleFormat.Dblp:
                     return 64;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -104,19 +103,19 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
     /// The context returned will be cached until this function is called again with different arguments.
     /// </summary>
     /// <param name="sampleFormat">Sample format of the output.</param>
-    /// <param name="channels">Number of channels of the output.</param>
+    /// <param name="channelCount">Number of channels of the output.</param>
     /// <param name="sampleRate">Sample rate of the output (Hz).</param>
     /// <returns>Cached or created resample context.</returns>
-    internal SwrContext* GetSuitableResampleContext(AVSampleFormat sampleFormat, int channels, int sampleRate)
+    internal SwrContext* GetSuitableResampleContext(AVSampleFormat sampleFormat, int channelCount, int sampleRate)
     {
         EnsureNotDisposed();
 
-        Trace.Assert(channels > 0 && sampleRate > 0);
-        Trace.Assert(channels == FFmpegHelper.RequiredChannels);
+        Trace.Assert(channelCount > 0 && sampleRate > 0);
+        Trace.Assert(channelCount == FFmpegHelper.RequiredChannels);
 
         var resampleContext = _resampleContext;
 
-        if (resampleContext == null || sampleFormat != _lastSampleFormat || channels != _lastChannels || sampleRate != _lastSampleRate)
+        if (resampleContext == null || sampleFormat != _lastSampleFormat || channelCount != _lastChannels || sampleRate != _lastSampleRate)
         {
             if (resampleContext != null)
             {
@@ -127,32 +126,9 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
 
             var codecContext = CodecContext;
 
-            ulong srcChannelLayout;
+            ref readonly AVChannelLayout srcChannelLayout = ref codecContext->ch_layout;
 
-            if (codecContext->channels == ffmpeg.av_get_channel_layout_nb_channels(codecContext->channel_layout))
-            {
-                srcChannelLayout = codecContext->channel_layout;
-            }
-            else
-            {
-                srcChannelLayout = (ulong)ffmpeg.av_get_default_channel_layout(codecContext->ch_layout.nb_channels);
-            }
-
-            int dstChannelLayout;
-
-            if (channels == 1)
-            {
-                dstChannelLayout = (int)ffmpeg.AV_CH_LAYOUT_MONO;
-            }
-            else if (channels == 2)
-            {
-                dstChannelLayout = (int)ffmpeg.AV_CH_LAYOUT_STEREO;
-            }
-            else
-            {
-                // There are more kinds of layouts; but we don't actually need them.
-                dstChannelLayout = (int)ffmpeg.AV_CH_LAYOUT_SURROUND;
-            }
+            ref readonly AVChannelLayout dstChannelLayout = ref SelectChannelLayout(channelCount);
 
             // There is another function swr_alloc_setopts(), but re-creating doesn't matter,
             // since changing parameters is not frequent.
@@ -166,12 +142,23 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
             }
 
             // Set options.
-            FFmpegHelper.Verify(ffmpeg.av_opt_set_int(resampleContext, "in_channel_layout", (int)srcChannelLayout, 0), Dispose);
-            FFmpegHelper.Verify(ffmpeg.av_opt_set_int(resampleContext, "in_sample_rate", codecContext->sample_rate, 0), Dispose);
-            FFmpegHelper.Verify(ffmpeg.av_opt_set_sample_fmt(resampleContext, "in_sample_fmt", codecContext->sample_fmt, 0), Dispose);
-            FFmpegHelper.Verify(ffmpeg.av_opt_set_int(resampleContext, "out_channel_layout", dstChannelLayout, 0), Dispose);
-            FFmpegHelper.Verify(ffmpeg.av_opt_set_int(resampleContext, "out_sample_rate", sampleRate, 0), Dispose);
-            FFmpegHelper.Verify(ffmpeg.av_opt_set_sample_fmt(resampleContext, "out_sample_fmt", sampleFormat, 0), Dispose);
+            {
+                fixed (AVChannelLayout* srcLayout = &srcChannelLayout)
+                {
+                    FFmpegHelper.Verify(ffmpeg.av_opt_set_chlayout(resampleContext, "in_chlayout", srcLayout, 0), Dispose);
+                }
+
+                FFmpegHelper.Verify(ffmpeg.av_opt_set_int(resampleContext, "in_sample_rate", codecContext->sample_rate, 0), Dispose);
+                FFmpegHelper.Verify(ffmpeg.av_opt_set_sample_fmt(resampleContext, "in_sample_fmt", codecContext->sample_fmt, 0), Dispose);
+
+                fixed (AVChannelLayout* dstLayout = &dstChannelLayout)
+                {
+                    FFmpegHelper.Verify(ffmpeg.av_opt_set_chlayout(resampleContext, "out_chlayout", dstLayout, 0), Dispose);
+                }
+
+                FFmpegHelper.Verify(ffmpeg.av_opt_set_int(resampleContext, "out_sample_rate", sampleRate, 0), Dispose);
+                FFmpegHelper.Verify(ffmpeg.av_opt_set_sample_fmt(resampleContext, "out_sample_fmt", sampleFormat, 0), Dispose);
+            }
 
             // Don't forget to initialize the context. This is the difference between SWR and SWS (sws_getContext).
             FFmpegHelper.Verify(ffmpeg.swr_init(resampleContext));
@@ -179,7 +166,7 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
             _resampleContext = resampleContext;
 
             _lastSampleFormat = sampleFormat;
-            _lastChannels = channels;
+            _lastChannels = channelCount;
             _lastSampleRate = sampleRate;
         }
 
@@ -206,11 +193,28 @@ internal sealed unsafe class AudioDecodingContext : DisposableBase
         _audioStream = null;
     }
 
+    private static ref readonly AVChannelLayout SelectChannelLayout(int channelCount)
+    {
+        switch (channelCount)
+        {
+            case 1:
+                return ref ffmpeg.AV_CHANNEL_LAYOUT_MONO;
+            case 2:
+                return ref ffmpeg.AV_CHANNEL_LAYOUT_STEREO;
+            case > 2:
+                // There are more kinds of layouts; but we don't actually need them.
+                // TODO: Support more channel layouts.
+                return ref ffmpeg.AV_CHANNEL_LAYOUT_SURROUND;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(channelCount), channelCount, "Invalid channel count.");
+        }
+    }
+
     private AVCodecContext* _codecContext;
     private AVStream* _audioStream;
     private SwrContext* _resampleContext;
 
-    private AVSampleFormat _lastSampleFormat = AVSampleFormat.AV_SAMPLE_FMT_NONE;
+    private AVSampleFormat _lastSampleFormat = AVSampleFormat.None;
     private int _lastChannels = -1;
     private int _lastSampleRate = -1;
 

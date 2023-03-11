@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FFmpeg.AutoGen;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback.VideoDecoding;
 
@@ -15,10 +15,9 @@ internal sealed unsafe class VideoDecodingContext : DisposableBase
     /// Creates a new <see cref="VideoDecodingContext"/> instance.
     /// </summary>
     /// <param name="videoStream">The video stream.</param>
-    /// <param name="formatContext">Format context.</param>
     /// <param name="videoCodec">Video codec.</param>
     /// <param name="decodingOptions">Decoding options.</param>
-    internal VideoDecodingContext([NotNull] AVFormatContext* formatContext, AVCodec* videoCodec, [NotNull] AVStream* videoStream, DecodingOptions decodingOptions)
+    internal VideoDecodingContext(AVCodec* videoCodec, [NotNull] AVStream* videoStream, DecodingOptions decodingOptions)
     {
         // https://riptutorial.com/ffmpeg/example/30961/open-a-codec-context
         var codecContext = ffmpeg.avcodec_alloc_context3(videoCodec);
@@ -122,7 +121,7 @@ internal sealed unsafe class VideoDecodingContext : DisposableBase
         {
             var frameRate = _videoStream->avg_frame_rate;
 
-            return (float)frameRate.num / frameRate.den;
+            return (float)frameRate.Num / frameRate.Den;
         }
     }
 

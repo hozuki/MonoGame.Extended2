@@ -1,7 +1,13 @@
-﻿//#define TEST_ASS
+﻿#define TEST_ASS
 //#define TEST_SRT
+//#define TEST_WMV_FILE
 
 using System;
+#if TEST_ASS
+using Demo.VideoPlayback.AssSubtitle;
+#elif TEST_SRC
+using Demo.VideoPlayback.SrtSubtitle;
+#endif
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -82,8 +88,10 @@ public sealed class Game1 : Game
         subtitle.Enabled = true;
 
         _videoPlayer.SubtitleRenderer = subtitle;
-#else
+#elif TEST_WMV_FILE
         _video = VideoHelper.LoadFromFile(@"C:\Users\MIC\Desktop\GameVideo\GameVideo\GameVideo\Content\Clip1.wmv");
+#else
+        _video = VideoHelper.LoadFromFile(@"Content/SampleVideo_1280x720_1mb.mp4");
 #endif
 
         _videoPlayer.IsLooped = true;

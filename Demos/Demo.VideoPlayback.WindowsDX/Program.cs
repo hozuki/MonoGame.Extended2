@@ -16,7 +16,7 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
-        FFmpegBinariesHelper.InitializeFFmpeg("x86", "x64");
+        FFmpegBinariesHelper.InitializeFFmpeg();
 
         using var game = new Game1();
         game.Run();

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using FFmpeg.AutoGen;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback.Extensions;
 

@@ -33,51 +33,24 @@ The techniques, such as video-audio synchronization and independent thread rende
 
 - [.NET 6.0](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 - MonoGame (≥ 3.8)
-- FFmpeg binaries (5.2, though earlier versions may work with corresponding FFmpeg.AutoGen)
+- FFmpeg binaries (5.1, though earlier versions may work with corresponding FFmpeg.AutoGen)
 
 Preparation:
 
-Create two directories `x86` and `x64` under the root directory. Place 32-bit binaries under `x86` directory, and 64-bit under `x64`.
-This library uses FFmpeg.AutoGen, linking against FFmpeg 5.2.x, so this is what you will have in each directory:
+With the new FFmpeg bindings [Sdcb.FFmpeg](https://nuget.org/packages/Sdcb.FFmpeg), you do not have to worry too much about binaries and cross-platform compatibility.
+In your project, reference [Sdcb.FFmpeg.runtime.windows-x64](https://nuget.org/packages/Sdcb.FFmpeg.runtime.windows-x64) package for Windows binaries. On other platforms
+it will try to use the native libraries installed. For example:
 
-- avcodec-59.dll
-- avdevice-59.dll
-- avfilter-8.dll
-- avformat-59.dll
-- avutil-57.dll
-- postproc-56.dll
-- swresample-4.dll
-- swscale-6.dll
+```bash
+# Ubuntu 22.04
+sudo apt install ffmpeg
+# libavcodec58, libavdevice58, ...
 
-Directory structure:
-
-```plain
-App.exe
-MonoGame.Extended.VideoPlayback.dll
-x64/
-  avcodec-59.dll
-  avdevice-59.dll
-  ...
-x86/
-  avcodec-59.dll
-  avdevice-59.dll
-  ...
+# macOS
+brew install ffmpeg
 ```
 
-Names of the binary directories can be changed, see the example below.
-
-`Program.cs`:
-
-```csharp
-static void Main(string[] args) {
-    // Directories of the binaries
-    FFmpegBinariesHelper.InitializeFFmpeg("x86", "x64");
-
-    using (var game = new Game1()) {
-        game.Run();
-    }
-}
-```
+Game code:
 
 `Game1.cs`:
 

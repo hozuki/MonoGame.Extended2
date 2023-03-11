@@ -1,5 +1,5 @@
 ﻿using System;
-using FFmpeg.AutoGen;
+using Sdcb.FFmpeg.Raw;
 
 namespace MonoGame.Extended.VideoPlayback;
 
